@@ -1,0 +1,42 @@
+{% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
+content %}
+
+<style>
+  .center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+</style>
+
+{% if DeckToDisplay == 'Parent' %}
+
+<form
+  method="post"
+  action="{{url_for('FlashcardsSection.chooseFlashcardDeckToManage',PageToDisplay=PageToDisplay,DeckToDisplay='Child')}}"
+>
+  {% for Deck in Decks%}
+  <input type="radio" id="deckName" name="deckName" value="{{Deck}}" />
+  <label for="deckName">{{Deck}}</label><br /><br />
+  {% endfor%}
+  <input name="ManageSubDecks" type="submit" value="Manage subdecks" />
+  <input name="Choose" type="submit" value="Choose" />
+</form>
+
+{% endif %} {% if DeckToDisplay == 'Child' %}
+
+<form
+  method="post"
+  action="{{url_for('FlashcardsSection.chooseFlashcardDeckToManage',PageToDisplay=PageToDisplay)}}"
+>
+  {% for Deck in Decks%}
+  <input type="radio" id="deckName" name="deckName" value="{{Deck}}" />
+  <label for="deckName">{{Deck}}</label><br /><br />
+  {% endfor%}
+  <input name="Choose" type="submit" value="Choose" />
+</form>
+
+{% endif %}{% endblock %}

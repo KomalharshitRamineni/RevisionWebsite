@@ -1,0 +1,62 @@
+{% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
+content %}
+
+<style>
+  .center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+</style>
+
+<form method="POST" style="color: #767c7c">
+  <h3 align="center">Deck</h3>
+  <div class="form-group">
+    <label for="SubDeckName">Sub deck name</label>
+    <input
+      type="text"
+      class="form-control"
+      id="SubDeckName"
+      name="SubDeckName"
+      placeholder="Enter name"
+    />
+  </div>
+
+  <br />
+
+  <h3 align="center">Add new flashcard</h3>
+  <div class="form-group">
+    <label for="Question">Question</label>
+    <input
+      type="text"
+      class="form-control"
+      id="Question"
+      name="Question"
+      placeholder="Enter question"
+    />
+  </div>
+  <div class="form-group">
+    <label for="Answer">Answer</label>
+    <input
+      type="text"
+      class="form-control"
+      id="Answer"
+      name="Answer"
+      placeholder="Enter Answer"
+    />
+  </div>
+
+  <br />
+  <button
+    type="submit"
+    class="btn btn-primary"
+    style="background-color: #767c7c; color: #e4e7e9"
+  >
+    Create Deck
+  </button>
+
+  {% endblock %}
+</form>

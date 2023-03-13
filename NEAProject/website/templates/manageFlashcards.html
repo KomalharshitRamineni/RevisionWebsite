@@ -1,0 +1,95 @@
+{% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
+content %}
+<h1 align="center" style="color: #767c7c">{{DeckName}}</h1>
+<style>
+  .center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+</style>
+{% if IsDeckAParentDeck == False %}
+<form method="post" action="/manageFlashcards/{{DeckName}}" class="center">
+  <input
+    type="submit"
+    value="Change name of deck"
+    name="action1"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Add New Flashcards"
+    name="action2"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Delete Flashcards"
+    name="action3"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+
+  <input
+    type="submit"
+    value="Delete Deck"
+    name="action6"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+
+  <input
+    type="submit"
+    value="Edit contents"
+    name="action4"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="View flashcards"
+    name="action5"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+</form>
+
+{% endif %} {% if IsDeckAParentDeck == True %}
+
+<form method="post" action="/manageFlashcards/{{DeckName}}" class="center">
+  <input
+    type="submit"
+    value="Change name of deck"
+    name="action1"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Delete Deck"
+    name="action6"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="View flashcards"
+    name="action5"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Create Subdeck"
+    name="action7"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+</form>
+
+{% endif %} {% endblock %}
