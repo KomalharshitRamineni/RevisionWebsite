@@ -1,0 +1,47 @@
+{% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
+content %}
+
+<style>
+  .center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+</style>
+
+<form method="post" action="/flashcards" class="center">
+  <input
+    type="submit"
+    value="Import Flashcards"
+    name="action1"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Manage Flashcards"
+    name="action2"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Create New Deck"
+    name="action3"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+
+  <input
+    type="submit"
+    value="Practice Flashcards"
+    name="action4"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+</form>
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
+content %}
+
+<style>
+  .center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+</style>
+
+<!-- 
+<form method="post" action="/flashcards" class="center">
+  <input
+    type="submit"
+    value="Import Flashcards"
+    name="action1"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="View Flashcards"
+    name="action2"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+</form>
+--->
+
+<form method="post" action="/importFlashcards">
+  {% for deckName in flashcardDecks%}
+  <input type="radio" id="deckName" name="deckName" value="{{deckName}}" />
+  <label for="deckName">{{deckName}}</label><br /><br />
+  {% endfor%}
+  <input type="submit" value="Import" />
+</form>
+
+{% endblock %}

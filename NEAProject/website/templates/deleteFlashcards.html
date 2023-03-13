@@ -1,0 +1,50 @@
+{% extends "base.html" %} {% block title %}{{DeckName}}{% endblock %} {% block
+content%}
+
+<link
+  rel="stylesheet"
+  href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"
+/>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/jquery-autocomplete/1.0.7/jquery.auto-complete.min.js"
+  integrity="sha512-TToQDr91fBeG4RE5RjMl/tqNAo35hSRR4cbIFasiV2AAMQ6yKXXYhdSdEpUcRE6bqsTiB+FPLPls4ZAFMoK5WA=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+
+<script type="text/javascript">
+  $(function () {
+    $("#autocomplete").autocomplete({
+      source: function (request, response) {
+        $.getJSON(
+          "{{url_for('FlashcardsSection.autocomplete',DeckName=DeckName )}}",
+          {
+            q: request.term, // in flask, "q" will be the argument to look for using request.args
+          },
+          function (data) {
+            response(data.Questions); // matching_results from jsonify
+          }
+        );
+      },
+      minLength: 2,
+      select: function (event, ui) {
+        console.log(ui.item.value); // not in your question, but might help later
+      },
+    });
+  });
+</script>
+
+<form method="POST" action="/DeleteFlashcards/{{DeckName}}">
+  <div>
+    <input
+      name="autocomplete"
+      type="text"
+      id="autocomplete"
+      class="form-control input-lg"
+    />
+  </div>
+  <input type="submit" value="Choose" />
+</form>
+
+{% endblock %}
