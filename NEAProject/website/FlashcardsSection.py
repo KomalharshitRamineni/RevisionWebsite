@@ -2,13 +2,12 @@ from flask import Blueprint, render_template, flash, redirect,url_for,request,js
 from flask_login import login_required, current_user
 from .AnkiOperations import extractFlashcards, returnDecksAvailable, checkIfAnkiOpen, returnChildDecks
 import sqlite3
-from .models import Flashcard, FlashcardDeck
+from .models import Flashcard, FlashcardDeck,QuizQuestion
 import json
 import pickle
 
 
 UserAndFlashcardDeckObjects = []
-
 
 def ClearUserAndFlashcardDeckObjects(ID):
     UserID = ID 
@@ -19,10 +18,6 @@ def ClearUserAndFlashcardDeckObjects(ID):
                 UserAndFlashcardDeckObjects.pop(count)
             count+=1
 
-
-
-
-
 FlashcardsSection = Blueprint('FlashcardsSection',__name__)
 
 
@@ -32,7 +27,6 @@ FlashcardsSection = Blueprint('FlashcardsSection',__name__)
 def flashcards():
     
     if request.method == 'POST':
-
         if request.form.get('action1') == 'Import Flashcards':
 
             if checkIfAnkiOpen() == False:
@@ -40,8 +34,6 @@ def flashcards():
                  return render_template("flashcards.html",user=current_user)
 
             return redirect(url_for('FlashcardsSection.importFlashcards'))
-
-           
 
         elif  request.form.get('action2') == 'Manage Flashcards':
             return redirect(url_for('FlashcardsSection.chooseFlashcardDeckToManage',PageToDisplay='ManageFlashcards'))
@@ -61,7 +53,6 @@ def flashcards():
     
     return render_template("flashcards.html",user=current_user)
  
-
 @FlashcardsSection.route('/PracticeFlashcards/<DeckName>',  methods=['GET', 'POST'])
 @login_required
 def PracticeFlashcards(DeckName):
@@ -74,11 +65,9 @@ def PracticeFlashcards(DeckName):
             if IdOfUser == UserID:
                 UserAndFlashcardDeckObjects.pop(x)
 
-
         Deck = FlashcardDeck()
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
-
 
         cursor.execute("""  SELECT FlashcardsDecksAndUserIDs.ParentFlashcardDeckID 
                             FROM ParentFlashcardDeck,FlashcardsDecksAndUserIDs 
@@ -88,9 +77,7 @@ def PracticeFlashcards(DeckName):
                             ,(DeckName,UserID,))
 
         parentDeckIDs = cursor.fetchone()
-        
         if parentDeckIDs == None:
-
 
             cursor.execute("""  SELECT FlashcardDeck.FlashcardDeckID 
                                 FROM FlashcardDeck,FlashcardsDecksAndUserIDs 
@@ -107,14 +94,13 @@ def PracticeFlashcards(DeckName):
                 Question = QuestionsAnswersAndKeywords[0][0]
                 Answer = QuestionsAnswersAndKeywords[0][1]
                 Keywords = QuestionsAnswersAndKeywords[0][2]
-                newFlashcard = Flashcard(Question,Answer)
+                newFlashcard = Flashcard(Question,Answer,UserID)
                 newFlashcard.setKeywords(Keywords)
                 Deck.AddToFlashcardDeck(newFlashcard)
 
             connection.close()
             UserIDAndFlashcardDeckObject = (UserID,Deck)
             UserAndFlashcardDeckObjects.append(UserIDAndFlashcardDeckObject)
-
 
         else:
             parentDeckID = parentDeckIDs[0]
@@ -122,6 +108,7 @@ def PracticeFlashcards(DeckName):
             cursor.execute("SELECT FlashcardID FROM FlashcardsDecksAndUserIDs WHERE ParentFlashcardDeckID=? AND UserID=?",(parentDeckID,UserID,))
 
             FlashcardIDs = cursor.fetchall()
+            count=0
 
             for FlashcardID in FlashcardIDs:
                 cursor.execute("SELECT FlashcardQuestion,FlashcardAnswer,Keywords FROM Flashcard WHERE FlashcardID=?",(FlashcardID[0],))
@@ -129,30 +116,35 @@ def PracticeFlashcards(DeckName):
                 Question = QuestionsAnswersAndKeywords[0][0]
                 Answer = QuestionsAnswersAndKeywords[0][1]
                 Keywords = QuestionsAnswersAndKeywords[0][2]
-                newFlashcard = Flashcard(Question,Answer)
+                newFlashcard = Flashcard(FlashcardID[0],Question,Answer,UserID)
                 newFlashcard.setKeywords(Keywords)
+
+                if count == 0:
+
+                    # SampleQuestion = QuizQuestion('MC',newFlashcard)
+                    # SampleQuestion.createQuestion()
+
+                    SampleQuestion = QuizQuestion('FB',newFlashcard)
+                    SampleQuestion.createQuestion()
+
+
+                count+=1
                 Deck.AddToFlashcardDeck(newFlashcard)
 
             connection.close()
             UserIDAndFlashcardDeckObject = (UserID,Deck)
             UserAndFlashcardDeckObjects.append(UserIDAndFlashcardDeckObject)
 
-
         for UserAndFlashcardDeckObject in UserAndFlashcardDeckObjects:
             if UserAndFlashcardDeckObject[0]==UserID:
                 Deck = UserAndFlashcardDeckObject[1]
         
-
-
         ContentToDisplay = Deck.PeekFlashcardDeck().getQuestion()
         actionName = 'question'
-
-
 
         return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=ContentToDisplay,actionName=actionName)
 
     if request.method == 'POST':
-
 
         for UserAndFlashcardDeckObject in UserAndFlashcardDeckObjects:
             if UserAndFlashcardDeckObject[0]==UserID:
@@ -169,8 +161,6 @@ def PracticeFlashcards(DeckName):
             ContentToDisplay = Deck.PeekFlashcardDeck().getQuestion()
             return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=ContentToDisplay,actionName=actionName)
 
-
-
         if request.form.get('action3') == 'Next Flashcard':
 
             if Deck.GetFlashcardDeck().size() == 1:
@@ -180,9 +170,6 @@ def PracticeFlashcards(DeckName):
 
                 flash('You have reached the end of your reck',category='error')
                 return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=ContentToDisplay,actionName=actionName)
-
-
-
 
             Deck.UseFlashcard()
             ContentToDisplay = Deck.PeekFlashcardDeck().getQuestion()
@@ -204,10 +191,6 @@ def PracticeFlashcards(DeckName):
             return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=ContentToDisplay,actionName=actionName)
 
         if request.form.get('action4') == 'Shuffle Deck':
-
-
-
-
             
             Deck.ShuffleDeck()
             if Deck.GetFlashcardDeck().size() == 1:
@@ -226,31 +209,17 @@ def PracticeFlashcards(DeckName):
 @login_required
 def CreateNewSubdeck(DeckName):
 
-
-
-
-
-
     UserID = current_user.get_id()
     if request.method == 'POST':
-
 
         MainDeckName = DeckName
         SubDeckName = request.form.get('SubDeckName')
 
-
-
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
-
-
-    
-
         cursor.execute("SELECT FlashcardDeckID FROM FlashcardDeck WHERE FlashcardDeckName=?",(MainDeckName,))
         FlashcardDeckIDsWithSameName= cursor.fetchall()
-
-
 
         if len(FlashcardDeckIDsWithSameName) != 0:
 
@@ -260,7 +229,6 @@ def CreateNewSubdeck(DeckName):
 
         else:
 
-            
             cursor.execute("INSERT INTO FlashcardDeck (FlashcardDeckName) values(?)",(SubDeckName,))
             connection.commit()
             connection.close()
@@ -268,16 +236,12 @@ def CreateNewSubdeck(DeckName):
 
         Question = request.form.get('Question')
         Answer = request.form.get('Answer')
-        NewFlashcard = Flashcard(Question,Answer)
+        NewFlashcard = Flashcard(Question,Answer,UserID)
         NewFlashcard.generateKeywords()
         Keywords = NewFlashcard.getKeywords()
 
         connection = sqlite3.connect("database.db",check_same_thread=False)#check before inserting,don
         cursor = connection.cursor()
-
-
-
-
 
         cursor.execute("SELECT COUNT(FlashcardID) FROM Flashcard")
         NextFlashcardDeckID = cursor.fetchall()
@@ -286,13 +250,7 @@ def CreateNewSubdeck(DeckName):
         cursor.execute("INSERT INTO Flashcard (FlashcardID,FlashcardQuestion,FlashcardAnswer,Keywords) values(?,?,?,?)",(NextFlashcardDeckID,Question,Answer,Keywords,))
         connection.commit()
 
-
-
-
-
         FlashcardID = NextFlashcardDeckID
-
-        
 
         cursor.execute("SELECT ParentFlashcardDeckID FROM ParentFlashcardDeck WHERE FlashcardDeckName=?",(MainDeckName,))
         MainFlashcardDeckID = cursor.fetchall()
@@ -305,18 +263,6 @@ def CreateNewSubdeck(DeckName):
         flash('Flashcard added! ', category='success')
         return redirect(url_for('FlashcardsSection.flashcards',user=current_user))
 
-
-
-
-
-
-
-
-
-
-
-
-
     return render_template('createNewSubdeck.html',user=current_user)
 
 
@@ -326,24 +272,14 @@ def CreateNewDeck():
     UserID = current_user.get_id()
     if request.method == 'POST':
 
-
-
         MainDeckName = request.form.get('MainDeckName')
         SubDeckName = request.form.get('SubDeckName')
-
-
 
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
-
-
-    
-
         cursor.execute("SELECT ParentFlashcardDeckID FROM ParentFlashcardDeck WHERE FlashcardDeckName=?",(MainDeckName,))
         ParentDeckIDsWithSameName= cursor.fetchall()
-
-
 
         if len(ParentDeckIDsWithSameName) != 0:
 
@@ -355,7 +291,6 @@ def CreateNewDeck():
 
             cursor.execute("INSERT INTO ParentFlashcardDeck (FlashcardDeckName) values(?)",(MainDeckName,))
             connection.commit()
-            
             cursor.execute("INSERT INTO FlashcardDeck (FlashcardDeckName) values(?)",(SubDeckName,))
             connection.commit()
             connection.close()
@@ -363,35 +298,21 @@ def CreateNewDeck():
 
         Question = request.form.get('Question')
         Answer = request.form.get('Answer')
-        NewFlashcard = Flashcard(Question,Answer)
+        NewFlashcard = Flashcard(Question,Answer,UserID)
         NewFlashcard.generateKeywords()
         Keywords = NewFlashcard.getKeywords()
 
         connection = sqlite3.connect("database.db",check_same_thread=False)#check before inserting,don
         cursor = connection.cursor()
 
-
-
-
-
         cursor.execute("SELECT COUNT(FlashcardID) FROM Flashcard")
         NextFlashcardDeckID = cursor.fetchall()
         NextFlashcardDeckID = int(NextFlashcardDeckID[0][0]) + 1
-
         cursor.execute("INSERT INTO Flashcard (FlashcardID,FlashcardQuestion,FlashcardAnswer,Keywords) values(?,?,?,?)",(NextFlashcardDeckID,Question,Answer,Keywords,))
         connection.commit()
-
-
-
-
-
         FlashcardID = NextFlashcardDeckID
-
-        
-
         cursor.execute("SELECT ParentFlashcardDeckID FROM ParentFlashcardDeck WHERE FlashcardDeckName=?",(MainDeckName,))
         MainFlashcardDeckID = cursor.fetchall()
-
         cursor.execute("SELECT FlashcardDeckID FROM FlashcardDeck WHERE FlashcardDeckName=?",(SubDeckName,))
         FlashcardDeckID = cursor.fetchall()
         cursor.execute("INSERT INTO FlashcardsDecksAndUserIDs(UserID,FlashcardDeckID,FlashcardID,ParentFlashcardDeckID) values(?,?,?,?)",(UserID,FlashcardDeckID[0][0],FlashcardID[0][0],MainFlashcardDeckID[0][0]))
@@ -454,7 +375,6 @@ def chooseFlashcardDeckToManage(PageToDisplay):
         deckNameToManage = request.form.get('deckName')
         if request.form.get('ManageSubDecks') == 'Manage subdecks':
             
-
             DeckToDisplay = request.args.get('DeckToDisplay')
             if DeckToDisplay == 'Child':
                 ChildDecks = []
@@ -465,9 +385,7 @@ def chooseFlashcardDeckToManage(PageToDisplay):
 
                 ChildDecks = list(dict.fromkeys(ChildDecks))
 
-
                 return render_template("chooseFlashcardDeckToManage.html", user=current_user,Decks=ChildDecks,PageToDisplay=PageToDisplay,DeckToDisplay='Child')
-
 
         if request.form.get('Choose') == 'Choose':
 
@@ -506,11 +424,6 @@ def manageFlashcards(DeckName):
     if parentDeckIDs == None:
         IsDeckAParentDeck = False
 
-
-
-
-
-
     if request.method == 'POST':
         if request.form.get('action1') == 'Change name of deck':
             return redirect(url_for('FlashcardsSection.changeFlashcardDeckName',DeckName=DeckName))
@@ -520,8 +433,6 @@ def manageFlashcards(DeckName):
 
         if request.form.get('action3') == 'Delete Flashcards':
             return redirect(url_for('FlashcardsSection.DeleteFlashcards',DeckName=DeckName))
-
-
         
         if request.form.get('action7') == 'Create Subdeck':
             return redirect(url_for('FlashcardsSection.CreateNewSubdeck',DeckName=DeckName))
@@ -532,7 +443,6 @@ def manageFlashcards(DeckName):
             cursor = connection.cursor()
 
             if IsDeckAParentDeck == True:
-
                 
                 cursor.execute("""  SELECT ParentFlashcardDeck.ParentFlashcardDeckID 
                                     FROM FlashcardsDecksAndUserIDs,ParentFlashcardDeck 
@@ -556,12 +466,9 @@ def manageFlashcards(DeckName):
                 connection.commit()
                 cursor.execute("DELETE FROM FlashcardsDecksAndUserIDs WHERE ParentFlashcardDeckID=?",(FlashcardDeckToDelete[0],))
                 connection.commit()
-
-                
+   
                 connection.close()
                 flash('Deck deleted!',category='success')
-
-
 
             else:
                 cursor.execute("""  SELECT FlashcardDeck.FlashcardDeckID 
@@ -570,7 +477,6 @@ def manageFlashcards(DeckName):
                                     AND FlashcardsDecksAndUserIDs.FlashcardDeckID=FlashcardDeck.FlashcardDeckID""",
                                     (DeckName,UserID,))
                 
-
                 FlashcardDeckToDelete = cursor.fetchone()
 
                 cursor.execute("""  SELECT FlashcardID 
@@ -591,12 +497,10 @@ def manageFlashcards(DeckName):
                 connection.close()
                 flash('Deck deleted!',category='success')
 
-
             return(redirect(url_for('FlashcardsSection.flashcards')))
 
         if request.form.get('action4') == 'Edit contents':
             return redirect(url_for('FlashcardsSection.ChooseFlashcardToEdit',DeckName=DeckName))
-
 
         if request.form.get('action5') == 'View flashcards':
 
@@ -633,11 +537,8 @@ def manageFlashcards(DeckName):
 
             else:
 
-
-
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
-
 
                 cursor.execute("SELECT FlashcardDeckID FROM FlashcardDeck WHERE FlashcardDeckName=?",(DeckName,))
                 DeckID = cursor.fetchall()
@@ -667,11 +568,8 @@ def manageFlashcards(DeckName):
 def autocomplete(DeckName):
 
     UserID = current_user.get_id()
-    #FlashcardQuestionAndIDs = {}
     FlashcardQuestions = []
-     
     search = request.args.get('q')
-
 
     connection = sqlite3.connect("database.db",check_same_thread=False)
     cursor = connection.cursor()
@@ -687,25 +585,10 @@ def autocomplete(DeckName):
         Question = cursor.fetchall()
         if len(Question) != 0:
             FlashcardQuestions.append(Question[0][0])
-            
-
-        #FlashcardQuestionAndIDs.update({FlashcardID:Question[0][0]})
 
     connection.close()
 
-    
-     
-    #FlashcardQuestions = FlashcardQuestionAndIDs.values()
-    #return jsonify(QuestionsAndIDs = FlashcardQuestionAndIDs)
-    
     return jsonify(Questions = FlashcardQuestions)
-
-    
-
-
-
-
-
 
 
     
@@ -714,19 +597,11 @@ def autocomplete(DeckName):
 def DeleteFlashcards(DeckName):
     UserID = current_user.get_id()
 
-    
     if request.method == 'POST':
 
-
-
-
         QuestionToDelete = request.form.get('autocomplete')#change name of variables to avoid plagarism
-    
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
-        #First get FlashcardID
-        #Then check wheteher it is owned by user
-        #if owned then remove
 
         cursor.execute("SELECT FlashcardID FROM Flashcard WHERE FlashcardQuestion=?",(QuestionToDelete,))
         FlashcardIDs = cursor.fetchall() #Same questions can be stored in database, so can return different IDs
@@ -754,7 +629,6 @@ def ChooseFlashcardToEdit(DeckName):
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
         
-
         cursor.execute("SELECT FlashcardID FROM Flashcard WHERE FlashcardQuestion=?",(FlashcardToEdit,))
         FlashcardIDs = cursor.fetchall() #Same questions can be stored in database, so can return different IDs
         for FlashcardId in FlashcardIDs:
@@ -771,7 +645,6 @@ def ChooseFlashcardToEdit(DeckName):
                 QuestionAndAnswer.append(FlashcardIdOfQuestion)
 
         connection.close()
-        #redirect(url_for('FlashcardsSection.EditContent',DeckName=DeckName))
         return render_template("editContents.html",user=current_user,OptionChosen=True,QuestionAndAnswer=QuestionAndAnswer,DeckName=DeckName)
         
     return render_template("editContents.html",user=current_user,OptionChosen=False,QuestionAndAnswer=None,DeckName=DeckName)
@@ -782,27 +655,23 @@ def ChooseFlashcardToEdit(DeckName):
 @FlashcardsSection.route('/EditContent/<DeckName>',  methods=['GET', 'POST'])
 @login_required
 def EditContent(DeckName):
-        
+    UserID=current_user.get_id()
     if request.method == 'POST':
 
         OldQuestionAndAnswer = []
         OldQuestionAndAnswerID = request.args.get('OldQuestionAndAnswerID')
 
-
         FlashcardIdOfQuestion = OldQuestionAndAnswerID
         QuestionFromForm = request.form.get('Question')
         AnswerFromForm = request.form.get('Answer')
 
-
-
-        UpdatedFlashcard = Flashcard(QuestionFromForm,AnswerFromForm)
+        UpdatedFlashcard = Flashcard(QuestionFromForm,AnswerFromForm,UserID)
         UpdatedFlashcard.generateKeywords()
 
         FlashcardQuestion = UpdatedFlashcard.getQuestion()
         FlashcardAnswer = UpdatedFlashcard.getAnswer()
         Keywords = UpdatedFlashcard.getKeywords()
 
-    
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
     
@@ -812,16 +681,12 @@ def EditContent(DeckName):
         cursor.execute("SELECT FlashcardAnswer FROM Flashcard WHERE FlashcardID=?",(FlashcardIdOfQuestion,))
         OldAnswer = cursor.fetchall()
         OldQuestionAndAnswer.append(OldAnswer[0][0])
-
-
         OldQuestionAndAnswer.append(FlashcardIdOfQuestion)
-
 
         if QuestionFromForm != OldQuestion[0][0]: #i.e if question has changed from origional
 
             cursor.execute("SELECT FlashcardID FROM Flashcard WHERE FlashcardQuestion=?",(QuestionFromForm,))
             DuplicateFlashcards = cursor.fetchall()#Checking if changed to a question that already exists
-
 
             if len(DuplicateFlashcards) == 0:
 
@@ -846,9 +711,6 @@ def EditContent(DeckName):
 
 
 
-
-
-
 @FlashcardsSection.route('/AddNewFlashcards/<DeckName>',  methods=['GET', 'POST'])
 @login_required
 def AddNewFlashcards(DeckName):
@@ -857,7 +719,7 @@ def AddNewFlashcards(DeckName):
 
         Question = request.form.get('Question')#consider removing OOP here
         Answer = request.form.get('Answer')
-        NewFlashcard = Flashcard(Question,Answer)
+        NewFlashcard = Flashcard(Question,Answer,UserID)
         NewFlashcard.generateKeywords()
         Keywords = NewFlashcard.getKeywords()
 
@@ -866,7 +728,6 @@ def AddNewFlashcards(DeckName):
 
         cursor.execute("SELECT FlashcardID FROM Flashcard WHERE FlashcardQuestion=? AND FlashcardAnswer =?",(Question,Answer,))#wrong querey need to be specific to user
         DuplicateFlashcards = cursor.fetchall()#needs to check if flashcard exists in same deck
-
         Duplicates = False
 
         for DuplicateFlashcard in DuplicateFlashcards:
@@ -905,7 +766,6 @@ def AddNewFlashcards(DeckName):
 
 
 
-
 @FlashcardsSection.route('/changeFlashcardDeckName/<DeckName>',  methods=['GET', 'POST'])
 @login_required
 def changeFlashcardDeckName(DeckName):
@@ -928,23 +788,17 @@ def changeFlashcardDeckName(DeckName):
     if parentDeckIDs == None:
         IsDeckAParentDeck = False
 
-
-
     if request.method == 'POST':
         newName = request.form.get('name')
         if newName == DeckName:
             flash('Name entered is the same as the current name! ', category='error')
             return render_template("changeFlashcardDeckName.html", user=current_user,DeckName=DeckName)
         
-
-
         if IsDeckAParentDeck == True:
-
 
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
 
-            
             cursor.execute("SELECT ParentFlashcardDeckID FROM ParentFlashcardDeck WHERE FlashcardDeckName=?",(newName,))
             DeckIDOfNewName = cursor.fetchall()
             cursor.execute("SELECT ParentFlashcardDeckID FROM ParentFlashcardDeck WHERE FlashcardDeckName=?",(DeckName,))
@@ -960,16 +814,11 @@ def changeFlashcardDeckName(DeckName):
 
             connection.close()
 
-
         else:
-
-
-
 
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
 
-            
             cursor.execute("SELECT FlashcardDeckID FROM FlashcardDeck WHERE FlashcardDeckName=?",(newName,))
             DeckIDOfNewName = cursor.fetchall()
             cursor.execute("SELECT FlashcardDeckID FROM FlashcardDeck WHERE FlashcardDeckName=?",(DeckName,))
@@ -992,49 +841,29 @@ def changeFlashcardDeckName(DeckName):
 
 
 
-
-
-
 @FlashcardsSection.route('/importFlashcards',  methods=['GET', 'POST'])
 @login_required
 def importFlashcards():
     UserID = current_user.get_id()
     flashcardDecks = returnDecksAvailable()
     if request.method == 'POST':
-
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
-
         deckNameToImport = request.form.get('deckName')
-
-
-        childDecks = returnChildDecks(deckNameToImport)
-
-#import whole deck but in anki operations give deckname 
-
 
         cursor.execute("INSERT INTO ParentFlashcardDeck(FlashcardDeckName) values(?)",(deckNameToImport,))
         connection.commit()
         cursor.execute("SELECT ParentFlashcardDeckID FROM ParentFlashcardDeck WHERE FlashcardDeckName=?",(deckNameToImport,))
         ParentFlashcardDeckID = cursor.fetchall()
-        #ParentFlashcardDeckID= ParentFlashcardDeckID[0][0]
-
-
-
-
-
 
         FlashcardsData = extractFlashcards(deckNameToImport)
         for card in FlashcardsData:
 
-            #FlashcardID = card.get('cardID')
             FlashcardQuestion = card.get('question')
             FlashcardAnswer = card.get('answer')
             Keywords = card.get('keywords')
             FlashcardDeckName = card.get('deckName')
-            #FlashcardDeckID = card.get('deckID')
 
-            #try:
             cursor.execute("SELECT FlashcardDeckID FROM FlashcardDeck WHERE FlashcardDeckName=?",(FlashcardDeckName,))
             FlashcardDeckIDs = cursor.fetchall()
             if len(FlashcardDeckIDs) == 0:
@@ -1043,15 +872,7 @@ def importFlashcards():
 
             cursor.execute("SELECT FlashcardDeckID FROM FlashcardDeck WHERE FlashcardDeckName=?",(FlashcardDeckName,))
             FlashcardDeckIDs = cursor.fetchall()
-            #FlashcardDeckID = FlashcardDeckIDs[0][0]
-
-
-
-
-
-
-
-            
+     
             cursor.execute("INSERT INTO Flashcard (FlashcardQuestion,FlashcardAnswer,Keywords) values(?,?,?)", (FlashcardQuestion,FlashcardAnswer,Keywords,))
             connection.commit()
 
@@ -1061,21 +882,11 @@ def importFlashcards():
 
             cursor.execute("INSERT INTO FlashcardsDecksAndUserIDs (FlashcardID,UserID,FlashcardDeckID,ParentFlashcardDeckID) values(?,?,?,?)",(FlashcardID,UserID,FlashcardDeckIDs[0][0],ParentFlashcardDeckID[0][0],))
             
-            
             connection.commit()
-
-
-                    
-                
-
-            # except:    
-            #     flash('You are trying to import flashcards that have already been imported!', category='error')#wrong error message needs to check if has same questions
-
-            
+   
         connection.close()
 
         flash('Flashcards Imported!', category='success')
-
 
         return redirect(url_for('FlashcardsSection.flashcards'))
 
