@@ -64,7 +64,7 @@ def create_app():
 
 
 def create_database(app):
-    if not path.exists('website/' + DB_NAME):
+    if not path.exists('NEAProject/website/' + DB_NAME):
 
         with app.app_context():
 
@@ -79,7 +79,7 @@ def create_database(app):
 
             # os.getcwd()
             # print(os.listdir())
-            with open("website/sqlCode.py", 'r') as file:
+            with open("NEAProject\website\sqlCode.py", 'r') as file:
                 exec(file.read())
 
 
