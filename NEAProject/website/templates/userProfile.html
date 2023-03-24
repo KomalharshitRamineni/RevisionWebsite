@@ -1,0 +1,31 @@
+{% extends "base.html" %} {% block title %}Profile{% endblock %} {% block
+content %}
+<h1>This is profile page</h1>
+<h1>{{UserDetails[0][0]}}</h1>
+<h1>{{UserDetails[0][1]}}</h1>
+
+<form method="post" class="center">
+  <input
+    type="submit"
+    value="Change Email"
+    name="ChangeEmail"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Change Name"
+    name="ChangeName"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Change Password"
+    name="ChangePassword"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+</form>
+
+{% endblock %}
