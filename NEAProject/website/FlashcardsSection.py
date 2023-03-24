@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, flash, redirect,url_for,request,jsonify,session
+from flask import Blueprint, render_template, flash, redirect,url_for,request,jsonify
 from flask_login import login_required, current_user
-from .AnkiOperations import extractFlashcards, returnDecksAvailable, checkIfAnkiOpen, returnChildDecks
+from .AnkiOperations import extractFlashcards, returnDecksAvailable, checkIfAnkiOpen
 import sqlite3
-from .models import Flashcard, FlashcardDeck,QuizQuestion
+from .models import Flashcard, FlashcardDeck,QuizQuestion,Quiz
 import json
 import pickle
 
@@ -19,8 +19,6 @@ def ClearUserAndFlashcardDeckObjects(ID):
             count+=1
 
 FlashcardsSection = Blueprint('FlashcardsSection',__name__)
-
-
 
 @FlashcardsSection.route('/flashcards',  methods=['GET', 'POST'])
 @login_required
@@ -103,12 +101,14 @@ def PracticeFlashcards(DeckName):
             UserAndFlashcardDeckObjects.append(UserIDAndFlashcardDeckObject)
 
         else:
+
+
+            
             parentDeckID = parentDeckIDs[0]
 
             cursor.execute("SELECT FlashcardID FROM FlashcardsDecksAndUserIDs WHERE ParentFlashcardDeckID=? AND UserID=?",(parentDeckID,UserID,))
 
             FlashcardIDs = cursor.fetchall()
-            count=0
 
             for FlashcardID in FlashcardIDs:
                 cursor.execute("SELECT FlashcardQuestion,FlashcardAnswer,Keywords FROM Flashcard WHERE FlashcardID=?",(FlashcardID[0],))
@@ -119,16 +119,6 @@ def PracticeFlashcards(DeckName):
                 newFlashcard = Flashcard(FlashcardID[0],Question,Answer,UserID)
                 newFlashcard.setKeywords(Keywords)
 
-                if count == 0:
-
-                    # SampleQuestion = QuizQuestion('MC',newFlashcard)
-                    # SampleQuestion.createQuestion()
-
-                    SampleQuestion = QuizQuestion('FB',newFlashcard)
-                    SampleQuestion.createQuestion()
-
-
-                count+=1
                 Deck.AddToFlashcardDeck(newFlashcard)
 
             connection.close()
@@ -394,6 +384,9 @@ def chooseFlashcardDeckToManage(PageToDisplay):
             if PageToDisplay == 'PracticeFlashcards':
                 return redirect(url_for('FlashcardsSection.PracticeFlashcards',DeckName=deckNameToManage))
 
+            if PageToDisplay == 'TakeQuiz':
+                return redirect(url_for('QuizSection.TakeQuiz',DeckName=deckNameToManage))
+
     return render_template("chooseFlashcardDeckToManage.html", user=current_user,Decks=ParentDecks,PageToDisplay=PageToDisplay,DeckToDisplay='Parent')
 
 
@@ -587,6 +580,7 @@ def autocomplete(DeckName):
             FlashcardQuestions.append(Question[0][0])
 
     connection.close()
+
 
     return jsonify(Questions = FlashcardQuestions)
 

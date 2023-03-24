@@ -1,0 +1,27 @@
+{% extends "base.html" %} {% block title %}test Up{% endblock %} {% block
+content %}
+
+<form method="POST" style="color: #767c7c">
+  <h3 align="center">Choose Number of questions</h3>
+  <div class="form-group">
+    <label for="nuber">Enter Number</label>
+    <input
+      type="number"
+      class="form-control"
+      id="number"
+      name="number"
+      placeholder="Enter number"
+    />
+  </div>
+
+  <br />
+  <button
+    type="submit"
+    class="btn btn-primary"
+    style="background-color: #767c7c; color: #e4e7e9"
+  >
+    Create Quiz
+  </button>
+</form>
+
+{% endblock %}

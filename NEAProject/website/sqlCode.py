@@ -19,8 +19,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS ParentFlashcardDeck (
 
 
 
-
-
 cursor.execute("""CREATE TABLE IF NOT EXISTS FlashcardsDecksAndUserIDs (
     FlashcardID INTEGER,
     UserID INTEGER,
@@ -46,28 +44,10 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS User (
     UserID INTEGER PRIMARY KEY,
     Email TEXT UNIQUE,
     Password TEXT,
-    FirstName TEXT)
+    FirstName TEXT,
+    PasswordAttempts INTEGER,
+    EmailConfirmed INTEGER)
     """)
-
-cursor.execute("""CREATE TABLE IF NOT EXISTS DayTimetable ( 
-    DayTimetableID INTEGER PRIMARY KEY,
-    Day TEXT,
-    P1 INTEGER,
-    P2 INTEGER,
-    P3 INTEGER,
-    P4 INTEGER,
-    P5 INTEGER,
-    WeekTimetableID INTEGER,
-    FOREIGN KEY(WeekTimetableID) REFERENCES WeekTimetable(WeekTimetableID))
-    """)
-#Sqllite doesn't have a boolean data type, instead stored as integer with 1 representing True and 0 False or vice versa
-
-cursor.execute("""CREATE TABLE IF NOT EXISTS WeekTimetable ( 
-    WeekTimetableID INTEGER PRIMARY KEY,
-    UserID INTEGER, 
-    FOREIGN KEY(UserID) REFERENCES user(UserID))
-    """)
-
 #Not foreign keys as would mean all days have same ID check
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS Question ( 
@@ -77,13 +57,15 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS Question (
     QuestionType TEXT,
     Question TEXT,
     Answer TEXT,
+    CorrectAnswer TEXT,
     FlashcardID INTEGER,
     FOREIGN KEY(FlashcardID) REFERENCES Flashcard(FlashcardID))
     """)
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS Quiz ( 
     QuizID INTEGER PRIMARY KEY,
-    NumberOfQuestions INTEGER)
+    NumberOfQuestions INTEGER,
+    NumberOfQuestionsAnsweredCorrectly INTEGER)
     """)
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS QuizQuestions ( 
@@ -99,7 +81,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS PastQuiz (
     FOREIGN KEY(UserID) REFERENCES user(UserID),
     FOREIGN KEY(QuizID) REFERENCES Quiz(QuizID))
     """)
-
 
 
 
