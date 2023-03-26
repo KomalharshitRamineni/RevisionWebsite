@@ -239,12 +239,16 @@
     });  
   </script>
   <form method="post" id="test-form">
-    <div id="answer-section">{% for x in Answers.split() %}
+    <div id="answer-section">
+      {% for x in Answers.split() %}
       <span class="pointer-type">{{x}}</span>
       {% endfor %}
     </div>
     <input id="answered" name="incorrectWord" type="hidden" value=""/>
-    <button  type="submit" class="btn btn-primary btn-blue">Submit</button>
+    <div class="mb-3">
+      <button  type="submit" class="btn btn-primary btn-blue">Submit</button>
+    </div>
+    
   </form>
 
 {% endif %}

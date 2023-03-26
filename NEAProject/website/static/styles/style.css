@@ -2,6 +2,10 @@ body {
   margin: 0;
   background-color: #e4e7e9;
 }
+a:hover {
+  font-weight: bolder;
+}
+
 .grey-back {
   background-color: #4d4dff;
 }
@@ -55,24 +59,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.join {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-}
-
-.create-btn {
-  width: 100%;
 }
 
 .message-box {
@@ -147,4 +133,44 @@ h2 {
 }
 input[type="radio"] {
   transform: scale(1.5);
+}
+
+.icon-input-btn {
+  display: inline-block;
+  position: relative;
+}
+.icon-input-btn input[type="submit"] {
+  padding-left: 2em;
+}
+.icon-input-btn .bi {
+  display: inline-block;
+  position: absolute;
+  left: 0.65em;
+  top: 20%;
+  color: white;
+}
+.fixed-width {
+  width: 200px;
+}
+h3 {
+  color: #4d4dff;
+}
+.btn-group input {
+  background-color: #4d4dff; /* Green background */
+  border: 1px solid #8585dc; /* Green border */
+  color: white; /* White text */
+  padding: 10px 24px; /* Some padding */
+  cursor: pointer; /* Pointer/hand icon */
+  width: 100%; /* Set a width if needed */
+  display: block; /* Make the buttons appear below each other */
+}
+
+.btn-group input:not(:last-child) {
+  border-bottom: none; /* Prevent double borders */
+}
+
+/* Add a background color on hover */
+.btn-group input:hover {
+  font-weight: bolder;
+  display: block;
 }
