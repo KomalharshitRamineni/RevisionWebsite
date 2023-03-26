@@ -65,7 +65,8 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS Question (
 cursor.execute("""CREATE TABLE IF NOT EXISTS Quiz ( 
     QuizID INTEGER PRIMARY KEY,
     NumberOfQuestions INTEGER,
-    NumberOfQuestionsAnsweredCorrectly INTEGER)
+    NumberOfQuestionsAnsweredCorrectly INTEGER,
+    DeckName TEXT)
     """)
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS QuizQuestions ( 

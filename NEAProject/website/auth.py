@@ -3,7 +3,7 @@ from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Mail,Message
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from itsdangerous import URLSafeTimedSerializer
 
 
 import sqlite3
@@ -47,8 +47,9 @@ def login():
                 cursor = connection.cursor()
 
                 cursor.execute("SELECT * from User WHERE Email = ?",(email,))
-                connection.close()
+                
                 results = cursor.fetchall()
+                connection.close()
                 if len(results) == 0:
                     flash('Account does not exist with email given!',category='error')
                     return render_template("login.html", user=None)
@@ -100,7 +101,7 @@ def login():
 
                 connection.close()
 
-                if ActualPassword[0][0] == password:
+                if check_password_hash(ActualPassword[0][0],password):
                     if EmailConfirmed[0][0] == 1:
 
                         connection = sqlite3.connect("database.db",check_same_thread=False)
@@ -120,7 +121,6 @@ def login():
                     else:
                         flash('Email not verified',category='error')
                 else:
-                    print(PasswordAttempts[0][0])
                     if PasswordAttempts[0][0] <= 3:
                         PasswordAttempts = PasswordAttempts[0][0] + 1
                         connection = sqlite3.connect("database.db",check_same_thread=False)
@@ -178,7 +178,7 @@ def login():
 
                 connection.close()
 
-                if ActualPassword[0][0] == password:
+                if check_password_hash(ActualPassword[0][0],password):
                     if EmailConfirmed[0][0] == 1:
                         flash('This email is already verified', category='error')
                     else:
@@ -266,7 +266,7 @@ def changePassword(email):
         else:
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
-            cursor.execute("UPDATE User SET Password=? WHERE Email=?",(Password2,email,))
+            cursor.execute("UPDATE User SET Password=? WHERE Email=?",(generate_password_hash(Password2, method='sha256'),email,))
             connection.commit()
             connection.close()
             flash('Password changed successfully',category='success')
@@ -326,7 +326,7 @@ def sign_up():
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
 
-                cursor.execute("INSERT INTO User (Email,Password,FirstName,EmailConfirmed,PasswordAttempts) values(?,?,?,?,?)", (Email,Password1,FirstName,0,0))
+                cursor.execute("INSERT INTO User (Email,Password,FirstName,EmailConfirmed,PasswordAttempts) values(?,?,?,?,?)", (Email,generate_password_hash(Password1, method='sha256'),FirstName,0,0))
                 connection.commit()
 
                 connection.close()

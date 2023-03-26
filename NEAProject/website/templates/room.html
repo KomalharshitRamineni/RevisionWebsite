@@ -1,105 +1,65 @@
 {% extends 'base.html' %} {% block content %}
-<div class="row">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script>
-    $.ajax({
-      type: "GET",
-      url: "{{url_for('QuizSection.quiz',DeckName='Biology',NumberOfQuestions=10)}}",
-      success: function (data) {
-        console.log("get info");
-        $("#quiz-section").html(data);
-      },
-    });
-    $("#qa-form").on("submit", function (event) {
-      alert("hello");
-      //event.preventDefault();
-      $.ajax({
-        type: "POST",
-        url: "{{url_for('QuizSection.quiz',DeckName='Biology',NumberOfQuestions=10)}}",
-        data: $("#qa-form").serialize(),
-        success: function (result) {
-          $("#quiz-section").html(data);
-        },
-      });
-    });
-    $("#qa-form").on("submit", function (event) {
-      alert("hello");
-      //event.preventDefault();
-      // $.ajax({
-      //   type: "POST",
-      //   url: "{{url_for('QuizSection.quiz',DeckName='Biology',NumberOfQuestions=10)}}",
-      //   data: $("#qa-form").serialize(),
-      //   success: function (result) {
-      //     $("#quiz-section").html(data);
-      //   },
-      // });
-    });
-    $("#sm-form").on("submit", function (event) {
-      alert("hello");
-      //event.preventDefault();
-      // $.ajax({
-      //   type: "POST",
-      //   url: "{{url_for('QuizSection.quiz',DeckName='Biology',NumberOfQuestions=10)}}",
-      //   data: $("#sm-form").serialize(),
-      //   success: function (result) {
-      //     $("#quiz-section").html(data);
-      //   },
-      // });
-    });
-    $("#fb-form").on("submit", function (event) {
-      alert("hello");
-      //event.preventDefault();
-      // $.ajax({
-      //   type: "POST",
-      //   url: "{{url_for('QuizSection.quiz',DeckName='Biology',NumberOfQuestions=10)}}",
-      //   data: $("#fb-form").serialize(),
-      //   success: function (result) {
-      //     $("#quiz-section").html(data);
-      //   },
-      // });
-    });
-    $("#mc-form").on("submit", function (event) {
-      alert("hello");
-      //event.preventDefault();
-      // $.ajax({
-      //   type: "POST",
-      //   url: "{{url_for('QuizSection.quiz',DeckName='Biology',NumberOfQuestions=10)}}",
-      //   data: $("#mc-form").serialize(),
-      //   success: function (result) {
-      //     $("#quiz-section").html(data);
-      //   },
-      // });
-    });
-  </script>
-  <div class="col-6" id="quiz-section"></div>
-  <div class="col-6"></div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+  $.ajax({
+    type: "GET",
+    url: "{{url_for('QuizSection.multiplayerQuiz',QuizID=QuizID)}}",
+    success: function (data) {
+      $("#quiz-section").html(data);
+    },
+  });
+  $.ajax({
+    type: "GET",
+    url: "/Scoreboard",
+    success: function (data) {
+    $('#scores').html(data);
+    },
+  });
+</script>
   <div class="row">
-    <div class="col-6"></div>
-    <div class="col-6">
-      <div class="message-box">
-        <h2>Quiz Room: {{code}}</h2>
-        <div class="messages" id="messages"></div>
-        <div class="inputs">
-          <input
-            type="text"
-            rows="3"
-            placeholder="Message"
-            name="message"
-            id="message"
-          />
-          <button
-            type="button"
-            name="send"
-            id="send-btn"
-            onClick="sendMessage()"
-          >
-            Send
-          </button>
+  <div class="col-8">
+    <div id="quiz-section"></div>
+  </div>  
+  <div class="col-4">  
+    <div class="row">
+      <div class="container">
+        <div class="row g-2">
+          <div class="message-box">
+            <h2>Score board: {{code}}</h2>
+            <div class="messages" id="scores"></div>
+          </div>
+        </div>
+        <div class="row mt-4 g-2">
+          <div class="message-box">
+            <h2>Quiz Room: {{code}}</h2>
+            <div class="messages" id="messages"></div>
+            <div class="inputs">
+              <input
+                type="text"
+                rows="3"
+                placeholder="Message"
+                name="message"
+                id="message"
+              />
+              <button
+                type="button"
+                name="send"
+                id="send-btn"
+                onClick="sendMessage()">
+                Send
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+       
+    </div>
+    
+      
     </div>
   </div>
-
+<!-- </div> -->
   <script type="text/javascript">
     var socketio = io();
 
@@ -119,9 +79,14 @@
       messages.innerHTML += content;
     };
 
-    socketio.on("message", (data) => {
-      createMessage(data.name, data.message);
-    });
+    // socketio.on("message", (data) => {
+    //   createMessage(data.name, data.message);
+    // });
+
+    // socketio.on("updateScore", (data) => {
+    //   alert("hello from 81")
+    //   alert(data);
+    // });
 
     const sendMessage = () => {
       const message = document.getElementById("message");
@@ -129,10 +94,17 @@
       socketio.emit("message", { data: message.value });
       message.value = "";
     };
+
+    // const updateScore = () => {
+    //   alert("hello from 93")
+    //   socketio.emit("updateScore");
+    // };
+
   </script>
   {% for msg in messages %} {{msg}}
   <script type="text/javascript">
     createMessage("{{msg.name}}", "{{msg.message}}");
   </script>
   {% endfor %} {% endblock %}
+</div>
 </div>

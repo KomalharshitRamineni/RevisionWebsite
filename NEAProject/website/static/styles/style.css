@@ -31,9 +31,10 @@ body {
 }
 .question,
 .drop-section {
-  min-width: 150px;
+  /* min-width: 150px; */
   min-height: 100px;
-  border: 1px solid #0b0b76;
+
+  /* border: 1px solid #0b0b76; */
 }
 .drag-section {
   min-width: 150px;
@@ -83,10 +84,35 @@ body {
   height: 40vh;
   display: flex;
   flex-direction: column;
-  width: 30vw;
+  width: 23vw;
   align-items: stretch;
 }
-
+.quiz-box {
+  border-color: rgb(192, 183, 183);
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 10px;
+  background-color: whitesmoke;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  width: 47vw;
+  align-items: stretch;
+}
+.quiz-body {
+  width: inherit;
+  height: 60vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
+.drag-container {
+  width: inherit;
+  height: 20vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
 .messages {
   overflow-y: scroll;
   flex: 1;
@@ -118,4 +144,7 @@ h2 {
 .muted {
   font-size: 10px;
   color: darkgray;
+}
+input[type="radio"] {
+  transform: scale(1.5);
 }

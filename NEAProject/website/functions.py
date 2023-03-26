@@ -1,24 +1,112 @@
-import json
-import urllib.request
+
 import numpy as np
 
 
 
-def request(action, **params):
-    return {'action': action, 'params': params, 'version': 6}
 
-def invoke(action, **params):
-    requestJson = json.dumps(request(action, **params)).encode('utf-8')
-    response = json.load(urllib.request.urlopen(urllib.request.Request('http://localhost:8765', requestJson)))
-    if len(response) != 2:
-        raise Exception('response has an unexpected number of fields')
-    if 'error' not in response:
-        raise Exception('response is missing required error field')
-    if 'result' not in response:
-        raise Exception('response is missing required result field')
-    if response['error'] is not None:
-        raise Exception(response['error'])
-    return response['result']
+def returnBestAndWorstScores(Quizzes,ParentDeck,SubDecksInParentDeck):
+    BestScore = 0
+    WorstScore = 1
+    BestQuiz = []
+    WorstQuiz = []
+    
+    for x in Quizzes:
+        score = x[2]#check if score parent deck = 
+
+        if x[0] == ParentDeck:
+            if score>=BestScore:
+                BestScore=score
+            if score<=WorstScore:
+                WorstScore=score
+
+
+    for x in Quizzes:
+        score = x[2]
+        if score == BestScore:
+            if x[1][3] in SubDecksInParentDeck and len(BestQuiz) == 0:#ensures that if same score than only one
+                BestQuiz.append(x)
+
+        elif score == WorstScore:
+            if x[1][3] in SubDecksInParentDeck and len(WorstQuiz) == 0:
+                WorstQuiz.append(x)
+
+                
+    if len(BestQuiz) == 0:
+        BestQuiz = None
+    elif len(WorstQuiz) == 0:
+        WorstQuiz =None
+
+    BestAndWorstQuiz = [BestQuiz,WorstQuiz]
+    return BestAndWorstQuiz
+
+
+
+
+
+
+
+def merge_sort(arr, reverse):#Reverse=True or False
+    if len(arr) <= 1:
+        return arr
+
+    # Split the array into two halves
+    mid = len(arr) // 2
+    left = arr[:mid]
+    right = arr[mid:]
+
+    # Recursively sort the two halves
+    left_sorted = merge_sort(left, reverse)
+    right_sorted = merge_sort(right, reverse)
+
+    # Merge the two sorted halves in the requested order
+    result = []
+    i, j = 0, 0
+    while i < len(left_sorted) and j < len(right_sorted):
+        if (not reverse and left_sorted[i] <= right_sorted[j]) or (reverse and left_sorted[i] >= right_sorted[j]):
+            result.append(left_sorted[i])
+            i += 1
+        else:
+            result.append(right_sorted[j])
+            j += 1
+
+    # Add any remaining elements from the left or right halves
+    result += left_sorted[i:]
+    result += right_sorted[j:]
+
+    return result
+
+
+def merge_sort_by_index(arr, index,reverse):
+    if len(arr) <= 1:
+        return arr
+
+    # Split the array into two halves
+    mid = len(arr) // 2
+    left = arr[:mid]
+    right = arr[mid:]
+
+    # Recursively sort the two halves
+    left_sorted = merge_sort_by_index(left, index,reverse)
+    right_sorted = merge_sort_by_index(right, index,reverse)
+
+    # Merge the two sorted halves based on the specified index
+    result = []
+    i, j = 0, 0
+    while i < len(left_sorted) and j < len(right_sorted):
+        if (not reverse and left_sorted[i][index] <= right_sorted[j][index]) or (reverse and left_sorted[i][index] >= right_sorted[j][index]):
+            result.append(left_sorted[i])
+            i += 1
+        else:
+            result.append(right_sorted[j])
+            j += 1
+
+
+    # Add any remaining elements from the left or right halves
+    result += left_sorted[i:]
+    result += right_sorted[j:]
+
+    return result
+
 
 
 def removePunc(string):
@@ -33,15 +121,26 @@ def removePunc(string):
 
 
 
-def checkIfAnkiOpen():
-    AnkiOpen = False
-    try:
-        DeckNames = invoke('deckNames')
-        AnkiOpen = True
-    except:
-        AnkiOpen = False
-    return AnkiOpen
+def extractKeywords(Questions,Answers, DeckID):
+    ExtractedData = []
+    for x in range(len(Questions)-1):
+
+        keywords = generateKeywords(Questions[x][2],Answers[x][2])
+
+        CardData = {
         
+        "cardID": int(Questions[x][0]),
+        "deckID": DeckID,
+        "deckName":Questions[x][1],
+        "question": Questions[x][2],
+        "answer": Answers[x][2],
+        "keywords": keywords
+        
+
+        }
+        ExtractedData.append(CardData)
+
+    return ExtractedData
 
 
 def removeHTMLCharacterEntities(string):
@@ -171,82 +270,7 @@ def CheckIfDecknamesFiltered(DeckNames):
     return filterd
 
 
-
-
-def returnDecksAvailable():
-
-    DeckNames = invoke('deckNames')
-    FilteredDeckNames=[]
-    DeckNames.remove('Default')
-
-
-    filtered = False
-    while filtered == False:
-        itemstoRemove = []
-
-        FilteredDeckNames.append(DeckNames[0])
-        Deck = DeckNames[0]
-        for x in DeckNames:
-            if Deck in x:
-                itemstoRemove.append(x)
-
-        for x in itemstoRemove:
-            DeckNames.remove(x)
-        if CheckIfDecknamesFiltered(DeckNames) == True:
-            filtered = True
-
-    return FilteredDeckNames
-
-
-def returnChildDecks(ParentDeckName):
-    DeckNames = invoke('deckNames')
-    DeckNames.remove('Default')
-    ChildDecks = []
-
-    for x in DeckNames:
-        if ParentDeckName in x:
-            ChildDecks.append(x)
-
-    ChildDecks.remove(ParentDeckName)
-
-    return ChildDecks
-
-
-
-
-
-def returnDeckID(deckNameToImport):
-    Cards = invoke('deckNamesAndIds')
-    for key,value in Cards.items():
-        if key == deckNameToImport:
-            return value
-
-
-
-def extractKeywords(Questions,Answers, DeckID):
-    ExtractedData = []
-    for x in range(len(Questions)-1):
-
-        keywords = generateKeywords(Questions[x][2],Answers[x][2])
-
-        CardData = {
-        
-        "cardID": int(Questions[x][0]),
-        "deckID": DeckID,
-        "deckName":Questions[x][1],
-        "question": Questions[x][2],
-        "answer": Answers[x][2],
-        "keywords": keywords
-        
-
-        }
-        ExtractedData.append(CardData)
-
-    return ExtractedData
-
-
 def generateKeywords(Question, Answer):
-
 
     ProcessedAnswerCard = processCard(Answer).split()
     ProcesesedQuestionCard = processCard(Question).split()
@@ -278,7 +302,13 @@ def generateKeywords(Question, Answer):
         KeywordsForCard.append(tupleofcard)
 
 
-    KeywordsForCard = sorted(KeywordsForCard,key=take_second,reverse=True)
+    KeywordsForCard = merge_sort_by_index(KeywordsForCard,1,True)
+
+
+    #KeywordsForCard = sorted(KeywordsForCard,key=take_second,reverse=True)
+
+
+
     TopKeywords = []
     for j in KeywordsForCard[:3]:
         TopKeywords.append(j[0])
@@ -288,102 +318,3 @@ def generateKeywords(Question, Answer):
         keywords = keywords + ' ' +m
 
     return(keywords)
-
-
-
-
-
-
-def extractFlashcards(deckNameToImport):
-
-
-    #API cannot handle spaces in deck name so need to replace with underscores
-    deckNameToImport = deckNameToImport.replace(' ','_')
-
-
-
-
-
-
-
-    Cards = invoke('findCards', query = f'deck:{deckNameToImport}')
-    DeckID = returnDeckID(deckNameToImport)
-
-
-    CardsInfo = (invoke('cardsInfo', cards = Cards))
-    RefinedData = []
-    for Card in CardsInfo:
-        if Card.get('modelName') != "Image Occlusion Enhanced":
-            RefinedData.append(Card)
-
-
-    indexOfCardsToRemove = []
-    Questions = []
-    Answers = []
-
-    counter = 0
-    for Card in RefinedData:
-
-        
-        cardID = Card.get('cardId')
-        DeckName = Card.get('deckName')
-        QuestionData = Card.get('question')
-        
-        if checkIfNeedToRemoveFlashcard(QuestionData, 'Question') == True:
-            indexOfCardsToRemove.append(counter)
-
-        RefinedQuestion = QuestionData[QuestionData.find('</style>') + 8:QuestionData.find('<div')-1]#Removes extra information about the card
-        RefinedQuestion = removeHTMLCharacterEntities(RefinedQuestion)
-        RefinedQuestion = removeExtraSpaces(removeHTML(RefinedQuestion))
-
-        QuestionCard = (cardID,DeckName,RefinedQuestion)
-        Questions.append(QuestionCard)
-
-
-        AnswerData = Card.get('answer')
-        FilteredAnswer = AnswerData[AnswerData.find('<hr id=answer'):]
-
-        if checkIfNeedToRemoveFlashcard(FilteredAnswer, 'Answer') == True:
-            indexOfCardsToRemove.append(counter)
-
-
-        if checkIfContainsSpanTag(FilteredAnswer) == True:
-            RemoveSpanTagStart = FilteredAnswer[FilteredAnswer.find('<span styl'):]
-            RefinedAnswer = RemoveSpanTagStart[RemoveSpanTagStart.find('>') + 1:]
-            RefinedAnswer = removeHTMLCharacterEntities(RefinedAnswer)
-        else:
-            RefinedAnswer = FilteredAnswer
-            RefinedAnswer = removeHTMLCharacterEntities(RefinedAnswer)
-
-
-        RefinedAnswer = removeExtraSpaces(removeHTML(RefinedAnswer))
-        AnswerCard = (cardID,DeckName,RefinedAnswer)
-        Answers.append(AnswerCard)
-        counter+=1
-
-        
-
-    for i in range((len(Questions))-1): #Checks if cards are blank
-        if Questions[i][2] == '':
-            indexOfCardsToRemove.append(i)
-
-    for i in range((len(Answers))-1):
-        if Answers[i][2] == '':
-            indexOfCardsToRemove.append(i)
-
-
-    indexOfCardsToRemove = list(dict.fromkeys(indexOfCardsToRemove)) # Removes Duplicates
-
-    indexOfCardsToRemove.sort(reverse=True)        # reverse list so that index doesn't change when looped thruough
-
-
-    for index in indexOfCardsToRemove:
-        Questions.pop(index)
-        Answers.pop(index)
-
-    return extractKeywords(Questions, Answers, DeckID)
-
-
-
-#Remove draw cards and check if duplicate cards
-#combine some funcions use meaningful variable names
