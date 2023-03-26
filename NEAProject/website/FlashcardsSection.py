@@ -82,7 +82,8 @@ def PracticeFlashcards(DeckName):
                 Question = QuestionsAnswersAndKeywords[0][0]
                 Answer = QuestionsAnswersAndKeywords[0][1]
                 Keywords = QuestionsAnswersAndKeywords[0][2]
-                newFlashcard = Flashcard(Question,Answer,UserID)
+                
+                newFlashcard = Flashcard(FlashcardID[0],Question,Answer,UserID)
                 newFlashcard.setKeywords(Keywords)
                 Deck.AddToFlashcardDeck(newFlashcard)
 
@@ -216,7 +217,7 @@ def CreateNewSubdeck(DeckName):
 
         Question = request.form.get('Question')
         Answer = request.form.get('Answer')
-        NewFlashcard = Flashcard(Question,Answer,UserID)
+        NewFlashcard = Flashcard(0,Question,Answer,UserID)#id0not storeing in databse
         NewFlashcard.generateKeywords()
         Keywords = NewFlashcard.getKeywords()
 
@@ -278,7 +279,7 @@ def CreateNewDeck():
 
         Question = request.form.get('Question')
         Answer = request.form.get('Answer')
-        NewFlashcard = Flashcard(Question,Answer,UserID)
+        NewFlashcard = Flashcard(0,Question,Answer,UserID)#id not storing in databse
         NewFlashcard.generateKeywords()
         Keywords = NewFlashcard.getKeywords()
 
@@ -649,7 +650,7 @@ def EditContent(DeckName):
         QuestionFromForm = request.form.get('Question')
         AnswerFromForm = request.form.get('Answer')
 
-        UpdatedFlashcard = Flashcard(QuestionFromForm,AnswerFromForm,UserID)
+        UpdatedFlashcard = Flashcard(0,QuestionFromForm,AnswerFromForm,UserID)#id not storing in databse
         UpdatedFlashcard.generateKeywords()
 
         FlashcardQuestion = UpdatedFlashcard.getQuestion()
@@ -703,7 +704,7 @@ def AddNewFlashcards(DeckName):
 
         Question = request.form.get('Question')#consider removing OOP here
         Answer = request.form.get('Answer')
-        NewFlashcard = Flashcard(Question,Answer,UserID)
+        NewFlashcard = Flashcard(0,Question,Answer,UserID)#idnot storing in databse
         NewFlashcard.generateKeywords()
         Keywords = NewFlashcard.getKeywords()
 

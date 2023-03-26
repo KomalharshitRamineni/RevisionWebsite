@@ -1,45 +1,56 @@
 {% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
 content %}
 
-<h1>{{ContentToDisplay}}</h1>
-
-<!-- <script type="text/javascript" src="../static/index.js"></script> -->
-<form
-  method="post"
-  action="{{url_for('FlashcardsSection.PracticeFlashcards',DeckName=DeckName)}}"
-  class="center"
->
-  <input
-    type="submit"
-    id="flipcard"
-    value="Flip Card"
-    name="{{actionName}}"
-    class="btn"
-    style="background-color: #767c7c; color: #e4e7e9"
-  />
-  <input
-    type="submit"
-    value="Previous Flashcard"
-    name="action2"
-    class="btn"
-    style="background-color: #767c7c; color: #e4e7e9"
-  />
-  <input
-    type="submit"
-    value="Next Flashcard"
-    name="action3"
-    class="btn"
-    style="background-color: #767c7c; color: #e4e7e9"
-  />
-  <input
-    type="submit"
-    value="Shuffle Deck"
-    name="action4"
-    class="btn"
-    style="background-color: #767c7c; color: #e4e7e9"
-  />
-</form>
-
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <form
+      method="post"
+      action="{{url_for('FlashcardsSection.PracticeFlashcards',DeckName=DeckName)}}"
+      class="center"
+    >
+      <div class="row card mb-3 text-center">
+        <div class="card-body">
+          <p class="font-weight-bold">{{ContentToDisplay}}</p>
+        </div>
+      </div>
+      <div class="row btn-group">
+        <div class="col-12">
+          <input
+            type="submit"
+            id="flipcard"
+            value="Flip Card"
+            name="{{actionName}}"
+            class="btn"
+          />
+        </div>
+        <div class="col-12">
+          <input
+            type="submit"
+            value="Previous Flashcard"
+            name="action2"
+            class="btn"
+          />
+        </div>
+        <div class="col-12">
+          <input
+            type="submit"
+            value="Next Flashcard"
+            name="action3"
+            class="btn"
+          />
+        </div>
+        <div class="col-12">
+          <input
+            type="submit"
+            value="Shuffle Deck"
+            name="action4"
+            class="btn"
+          />
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="col-2"></div>
+</div>
 {% endblock %}
-<!-- {{url_for('views.PracticeFlashcards',DeckName=DeckName)}} -->
-<!-- <form method="post" action="/PracticeFlashcards/{{DeckName}}" class="center"></form> -->
