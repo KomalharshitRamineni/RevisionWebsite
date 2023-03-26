@@ -1,22 +1,12 @@
 from flask import Blueprint, render_template, flash, redirect,url_for,request,jsonify
 from flask_login import login_required, current_user
-from .AnkiOperations import extractFlashcards, returnDecksAvailable, checkIfAnkiOpen
+from .AnkiFunctions import extractFlashcards, returnDecksAvailable, checkIfAnkiOpen
 import sqlite3
-from .models import Flashcard, FlashcardDeck,QuizQuestion,Quiz
-import json
-import pickle
+from .models import Flashcard, FlashcardDeck
+
 
 
 UserAndFlashcardDeckObjects = []
-
-def ClearUserAndFlashcardDeckObjects(ID):
-    UserID = ID 
-    if request.url_rule.endpoint != 'FlashcardsSection.PracticeFlashcards':
-        count=0
-        for UserAndFlashcardDeckObject in UserAndFlashcardDeckObjects:
-            if UserID == UserAndFlashcardDeckObject[0]:
-                UserAndFlashcardDeckObjects.pop(count)
-            count+=1
 
 FlashcardsSection = Blueprint('FlashcardsSection',__name__)
 
@@ -512,7 +502,7 @@ def manageFlashcards(DeckName):
                                     AND ParentFlashcardDeck.ParentFlashcardDeckID=FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
                                 """,(UserID,DeckName,))
                 FlashcardIDs = cursor.fetchall()
-                print(FlashcardIDs)
+    
 
                 for index in range(len(FlashcardIDs)):
                     cursor.execute("SELECT * from Flashcard WHERE FlashcardID=?",(FlashcardIDs[index][0],))

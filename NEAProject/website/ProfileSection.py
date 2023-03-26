@@ -1,13 +1,16 @@
-from flask import Blueprint, render_template, flash, redirect,url_for,request,jsonify,session,current_app
+from flask import Blueprint, render_template, flash, redirect,url_for,request,current_app
 from flask_login import login_required, current_user,logout_user
-from .AnkiOperations import extractFlashcards, returnDecksAvailable, checkIfAnkiOpen, returnChildDecks
 import sqlite3
-from .models import Flashcard, FlashcardDeck
 from flask_mail import Mail,Message
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from itsdangerous import URLSafeTimedSerializer
+from .functions import returnBestAndWorstScores
 
 s=URLSafeTimedSerializer('SECRET KEY')
 ProfileSection = Blueprint('ProfileSection',__name__)
+
+
+
+
 
 
 
@@ -29,6 +32,10 @@ def Profile():
         if request.form.get('ChangeName') == 'Change Name':
             return redirect(url_for('ProfileSection.changeName'))
         
+        if request.form.get('ViewFeedback') == 'View Feedback':
+            return redirect(url_for('ProfileSection.ViewFeedback'))
+
+
         if request.form.get('ChangeEmail') == 'Change Email':
 
     
@@ -152,6 +159,86 @@ def changeName():
         return redirect(url_for('ProfileSection.Profile'))
 
     return render_template('changeUserName.html',user=current_user)
+
+
+
+
+
+@ProfileSection.route('/ViewFeedback',methods=['GET', 'POST'])
+@login_required
+def ViewFeedback():
+    UserID = current_user.get_id()
+    feedback=[]
+    ParentDeckNamesOwnedByUser = {}
+    Quizzes = []
+
+    connection = sqlite3.connect("database.db",check_same_thread=False)
+    cursor = connection.cursor()
+
+    cursor.execute("""  SELECT ParentFlashcardDeck.FlashcardDeckName
+                        FROM ParentFlashcardDeck,FlashcardsDecksAndUserIDs
+                        WHERE FlashcardsDecksAndUserIDs.UserID=?
+                        AND FlashcardsDecksAndUserIDs.ParentFlashcardDeckID=ParentFlashcardDeck.ParentFlashcardDeckID""",(UserID,))
+    ParentDecksOwnedByUser = cursor.fetchall()
+    ParentDecksOwnedByUser = list(dict.fromkeys(ParentDecksOwnedByUser))
+    for x in ParentDecksOwnedByUser:
+        ParentDeckNamesOwnedByUser[x[0]] = []
+
+
+    for key in ParentDeckNamesOwnedByUser.keys():   
+        cursor.execute("""  SELECT FlashcardDeck.FlashcardDeckName 
+                            FROM FlashcardDeck,ParentFlashcardDeck,FlashcardsDecksAndUserIDs 
+                            WHERE ParentFlashcardDeck.FlashcardDeckName = ?
+                            AND ParentFlashcardDeck.ParentFlashcardDeckID=FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
+                            AND FlashcardDeck.FlashcardDeckID=FlashcardsDecksAndUserIDs.FlashcardDeckID
+                            
+                            """,(key,))
+        subdecksOfParentDeck = []
+        subdecks = cursor.fetchall()
+        subdecks = list(dict.fromkeys(subdecks))
+        for x in subdecks:
+            subdecksOfParentDeck.append(x[0])
+        ParentDeckNamesOwnedByUser.update({key:subdecksOfParentDeck})
+
+
+
+
+    cursor.execute("SELECT QuizID FROM PastQuiz WHERE UserID=?",(UserID,))
+    QuizIDsDoneByUser = cursor.fetchall()
+    QuizIDsDoneByUser = list(dict.fromkeys(QuizIDsDoneByUser))
+
+
+    for x in QuizIDsDoneByUser:
+        QuizID = x[0]
+        cursor.execute("SELECT * FROM Quiz WHERE QuizID=?",(QuizID,))
+        QuizDetails = cursor.fetchall()
+        for key,value in ParentDeckNamesOwnedByUser.items():
+            if QuizDetails[0][3] in value:
+                score = int(QuizDetails[0][2])/int(QuizDetails[0][1])
+                Quizzes.append((key,QuizDetails[0],score))
+
+
+    for key,value in ParentDeckNamesOwnedByUser.items():
+        feedback.append(returnBestAndWorstScores(Quizzes,key,value))
+        
+
+
+    return render_template('ViewFeedback.html',user=current_user,feedback=feedback)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

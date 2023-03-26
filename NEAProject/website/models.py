@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from .AnkiOperations import generateKeywords,take_second,removePunc
+from .functions import generateKeywords,take_second,removePunc,merge_sort_by_index
 import random
 import sqlite3
 class User(UserMixin):
@@ -113,7 +113,9 @@ class Flashcard():
                 matchingFlashCards.pop(x)
 
         matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-        matchingFlashCards.sort(key=take_second)
+
+        #matchingFlashCards.sort(key=take_second)
+        matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
 
         
 
@@ -144,11 +146,11 @@ class Flashcard():
                 matchingFlashCards.pop(x)
 
         matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-        matchingFlashCards.sort(key=take_second)
+        matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
+        #matchingFlashCards.sort(key=take_second)
 
 
         if len(matchingFlashCards) <=1:
-
             self.PossibleQuestionTypes.remove('QA')
 
 
@@ -171,12 +173,19 @@ class Flashcard():
             if x in self.Answer.lower():
                 keywordInAnswer = True
 
+        if keywordInAnswer == False:
+
+            self.PossibleQuestionTypes.remove('SM')
+
+        keywordInAnswer = False
         for x in keywords:
             if x in self.Answer.lower():
                 keywordInAnswer = True
-        if keywordInAnswer == False:
-            self.PossibleQuestionTypes.remove('SM')
 
+        if keywordInAnswer == False:
+
+            if 'SM' in self.PossibleQuestionTypes:
+                self.PossibleQuestionTypes.remove('SM')
 
 
 
@@ -509,7 +518,8 @@ class QuizQuestion():
                     matchingFlashCards.pop(x)
 
             matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-            matchingFlashCards.sort(key=take_second)
+            #matchingFlashCards.sort(key=take_second)
+            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
             AnswersToDisplay = [self.correctAnswer]
 
             for x in range(len(matchingFlashCards)):
@@ -580,7 +590,8 @@ class QuizQuestion():
                     matchingFlashCards.pop(x)
 
             matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-            matchingFlashCards.sort(key=take_second)#sort by taking highst matching score
+            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
+            #matchingFlashCards.sort(key=take_second)#sort by taking highst matching score
             AnswersToDisplay = [self.Flashcard.getAnswer()]
             QuestionsToDisplay = [self.Flashcard.getQuestion()]
             correctAnswer={}
@@ -634,7 +645,8 @@ class QuizQuestion():
                     matchingFlashCards.pop(x)
 
             matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-            matchingFlashCards.sort(key=take_second)
+            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
+            #matchingFlashCards.sort(key=take_second)
 
             keywords = []
 

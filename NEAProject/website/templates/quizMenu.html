@@ -14,24 +14,25 @@ content %}
 
 <form method="post" class="buttons">
   <h3>Host or join a quiz room</h3>
-  <div>
-    <label>Name:</label>
-    <input
-      type="text"
-      placeholder="Pick a name!"
-      name="name"
-      value="{{name}}"
-    />
-  </div>
   <div class="join">
     <input type="text" placeholder="Room Code" name="code" value="{{code}}" />
     <button type="submit" name="join">Join a Quiz</button>
   </div>
+  <input type="text" name="QuizID" placeholder="Enter QuizID" />
   <button type="submit" name="create" class="create-btn">Host a Quiz</button>
-  {% if error %}
-  <ul>
-    <li>{{error}}</li>
-  </ul>
-  {% endif %}
+  <input
+    type="submit"
+    value="Take Quiz"
+    name="TakeQuiz"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
+  <input
+    type="submit"
+    value="Previous Quizzes"
+    name="PreviousQuizzes"
+    class="btn"
+    style="background-color: #767c7c; color: #e4e7e9"
+  />
 </form>
 {% endblock %}
