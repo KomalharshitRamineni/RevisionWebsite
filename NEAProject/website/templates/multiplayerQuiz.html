@@ -22,7 +22,7 @@
             e.stopPropagation();          
             $.ajax({
               type: "POST",
-              url: "{{url_for('QuizSection.multiplayerQuiz',QuizID=QuizID)}}",
+              url: "{{url_for('quizSection.multiplayerQuiz',QuizID=QuizID)}}",
               data: $("#test-form").serialize(),
               success: function (data) {               
                 $("#quiz-section").html(data);                
@@ -46,67 +46,87 @@
       </script>
 {% if DisplayCorrectAnswer == False %}
 {% if QuestionType == 'MC' %}
-  <div class="quiz-box">
-    <div class="card">
-      <p class="card-header bg-primary text-wrap p-3" style="color: #e4e7e9; font-size:larger;">{{Questions}}</p>           
-        <form method="post" class="center" id="test-form">
-          <div class="card-body quiz-body">
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[0]}}" >
-              <label class="form-check-label" for="flexRadioDefault0">
-                {{Answers[0]}}
-              </label>
+<div class="row">  
+  <div class="col">
+    <div class="quiz-box">
+      <div class="card">
+        <p class="card-header bg-primary text-wrap p-3" style="color: #e4e7e9; font-size:larger;">{{Questions}}</p>           
+          <form method="post" id="test-form">
+            <div class="card-body quiz-body">
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[0]}}" >
+                <label class="form-check-label" for="flexRadioDefault0">
+                  {{Answers[0]}}
+                </label>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[1]}}" >
+                <label class="form-check-label" for="flexRadioDefault1">
+                  {{Answers[1]}}
+                </label>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[2]}}" >
+                <label class="form-check-label" for="flexRadioDefault2">
+                  {{Answers[2]}}
+                </label>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[3]}}" >
+                <label class="form-check-label" for="flexRadioDefault3">
+                  {{Answers[3]}}
+                </label>
+              </div>            
+            </div>    
+            <div class="card-footer text-center">
+              <input class="btn btn-primary btn-blue" name="Choose" type="submit" value="Submit" />
             </div>
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[1]}}" >
-              <label class="form-check-label" for="flexRadioDefault1">
-                {{Answers[1]}}
-              </label>
-            </div>
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[2]}}" >
-              <label class="form-check-label" for="flexRadioDefault2">
-                {{Answers[2]}}
-              </label>
-            </div>
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="radio" id="answer" name="answer" value="{{Answers[3]}}" >
-              <label class="form-check-label" for="flexRadioDefault3">
-                {{Answers[3]}}
-              </label>
-            </div>            
-          </div>    
-          <div class="card-footer">
-            <input class="btn btn-primary btn-blue" name="Choose" type="submit" value="Submit" />
-          </div>
-        </form>
-      </div>
-    </div>       
+          </form>
+        </div>
+      </div>    
+  </div> 
+</div>
+    
   {% endif %} {% if QuestionType == 'FB' %}
-    
-    <h1>{{Questions}}</h1>
-    <h1>{{Answers}}</h1>
-    
-    <form method="POST" id="test-form">
-      <h3 class="text-center">Enter Answer</h3>
-      <div class="form-group">
-        <label for="Answer">Answer</label>
-        <input
-          type="text"
-          class="form-control"
-          id="Answer"
-          name="Answer"
-          placeholder="Enter Answer"
-        />
+  <div class="row">
+    <div class="col">
+      <div class="quiz-box">
+        <div class="card">
+            <div class="card-header">
+              <p>{{Questions}}</p>
+            </div>
+            <div class="card-body">
+              <p>{{Answers}}</p>
+            </div>
+            <div class="card-footer">
+              <form method="POST" id="test-form">
+                <h3 class="text-center mb-3">Enter Answer</h3>
+                <div class="form-group">
+                  <label for="Answer" class="form-label">Answer</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="Answer"
+                    name="Answer"
+                    placeholder="Enter Answer"
+                  />
+                </div>
+              
+                <br />
+                <div class="text-center">
+                  <button
+                  type="submit"
+                  class="btn btn-primary btn-blue" >
+                  Submit
+                </button>
+                </div>                
+               </form>
+            </div>
+        </div>    
       </div>
-    
-      <br />
-      <button
-        type="submit"
-        class="btn btn-primary btn-blue" >
-        Submit
-      </button>
-     </form>
+    </div> 
+  </div>
+ 
 {% endif %} 
 
 {% if QuestionType == 'QA' %}
@@ -228,28 +248,45 @@
   </form>
 {% endif %}
 {% if QuestionType == 'SM' %}
-{{Questions}}
-  <script>
+<script>
   $(document).ready(function(){
     $("span").click(function(event){
       event.stopPropagation();
+      changeBackGroundOnClick();
+      $(this).addClass('back-color')
       let spanVal=$(this).text();
       $('#answered').val(spanVal);
     });
     });  
+    function changeBackGroundOnClick(){
+      $('#answer-section span').removeClass('back-color')       
+       }
   </script>
-  <form method="post" id="test-form">
-    <div id="answer-section">
-      {% for x in Answers.split() %}
-      <span class="pointer-type">{{x}}</span>
-      {% endfor %}
+ <div class="row"> 
+  <div class="col">
+    <div class="quiz-box">
+      <form method="post" id="test-form" >
+        <div class="card">
+          <div class="card-header bg-primary text-wrap p-3" style="color: #e4e7e9; font-size:larger;">
+            <p>{{Questions}}</p>
+          </div>
+          <div class="card-body">
+            <div id="answer-section">{% for x in Answers.split() %}
+              <span class="pointer-type">{{x}}</span>
+              {% endfor %}
+            </div>
+            <input id="answered" name="incorrectWord" type="hidden" value=""/>
+          </div>
+          <div class="card-footer">
+            <div class="text-center">
+              <button  type="submit" class="btn btn-primary btn-blue">Submit</button>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
-    <input id="answered" name="incorrectWord" type="hidden" value=""/>
-    <div class="mb-3">
-      <button  type="submit" class="btn btn-primary btn-blue">Submit</button>
-    </div>
-    
-  </form>
+  </div>
+</div>
 
 {% endif %}
 {% endif %}
@@ -260,9 +297,8 @@
     <div class="card">
       <div class="card-header bg-success text-center">
         <p>Correct answer</p>
-      </div>
-    </div>
-    <form method="post" class="center" id="test-form">
+      </div>   
+    <form method="post" id="test-form">
       <div class="card-body">
         <p class="card-body">{{CorrectAnswer}}</h1>
       </div>
@@ -271,36 +307,58 @@
         <input type="submit" value="Next Question" name="NextQuestion" class="btn btn-primary btn-blue" />
       </div>
     </form>
-  </div>                
+  </div>   
+</div>             
 {% endif %}
 {% if QuestionType == 'FB' %}
-  <form method="post" class="center" id="test-form">
-    <h1>{{CorrectAnswer}}</h1>
+<div class="quiz-box">
+  <div class="card">
+    <div class="card-header bg-success text-center">
+      <p>Correct answer</p>
+    </div>
+  
+  <form method="post" id="test-form">
+    <div class="card-body">
+      <p class="card-body">{{CorrectAnswer}}</h1>
+    </div>
     <input type="hidden" value="True" name="DisplayAnswer"/>
-    <input
-    type="submit"
-    value="Next Question"
-    name="NextQuestion"
-    class="btn btn-primary btn-blue"
-    />
+    <div class="card-footer text-center">
+      <input
+      type="submit"
+      value="Next Question"
+      name="NextQuestion"
+      class="btn btn-primary btn-blue"
+      />
+    </div>    
   </form>
+</div>
 {% endif %}
 {% if QuestionType == 'SM' %}
-        
-  <form method="post" class="center" id="test-form">
-    <h1>{{Answers}}</h1>
-    <h1>{{CorrectAnswer}}</h1>
-    <input type="hidden" value="True" name="DisplayAnswer"/>
-    <input
-    type="submit"
-    value="Next Question"
-    name="NextQuestion"
-    class="btn btn-primary btn-blue"
-    />
-  </form>
+<div class="row">
+  <div class="col">
+    <div class="quiz-box">
+      <form method="post" id="test-form">
+        <div class="card">
+          <div class="card-header bg-primary text-wrap p-3" style="color: #e4e7e9; font-size:larger;">
+            <p>{{Answers}}</p>
+          </div>
+          <div class="card-body">
+            <p>{{CorrectAnswer}}</p>
+			      <input type="hidden" value="True" name="DisplayAnswer"/>
+          </div>
+          <div class="card-footer">
+            <div class="text-center">
+               <input type="submit" value="Next Question" name="NextQuestion" class="btn btn-primary btn-blue" />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endif %}
 {% if QuestionType == 'QA' %}
-  <form method="post" class="center" id="test-form">
+  <form method="post" id="test-form">
     <div class="card">
       <h5 class="card-header">Answer</h5>
       <div class="card-body">

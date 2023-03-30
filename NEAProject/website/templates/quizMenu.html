@@ -1,10 +1,10 @@
-{% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
+{% extends "base.html" %} {% block title %}Quiz{% endblock %} {% block
 content %}
 <div class="row">
   <div class="col-2"></div>
   <div class="col-8">
     <form method="post">
-      <h3 class="text-center mb-3">Host or join a quiz room</h3>
+      <h3 class="text-center mb-3">Quiz</h3>
     <div class="col text-center">
       <div class="row form-inline">
       <div class="form-group mx-sm-3 mb-2">
@@ -22,7 +22,14 @@ content %}
       <div class="row">
         <div class="col-12">
           <hr/>
-          <p>dassssssssfghjhkljhgfdsfghg</p>
+          <p>Welcome to the Quiz page! Here's where you can take quizzes independently or with other students. There are two types of quizzes available:</p>
+          <ul>
+          <li>Single-player Quiz: This Quiz allows you to test your knowledge on your flashcards. You can choose the flashcard deck you want to quiz yourself on and then set the number of questions. Once you start the quiz, you'll be presented with questions that have been randomly generated from your flashcard deck. You'll receive immediate feedback on your answers during the quiz and will be able to see your results at the end.</li>
+          <br>
+          <li>Multiplayer Quiz: The Multiplayer Quiz allows you to join or host a quiz room with other students. You can choose to join a quiz room using an access code or create your own quiz room. In the quiz room, you and the other players will be presented with questions from the quiz chosen by the host. At the end of the quiz, you'll see the leaderboard and how you compare to other players.</li>
+          </ul>
+          <p>Thank you for choosing Revisionary for your quizzing needs. Whether you're studying on your own or with others, we're committed to helping you achieve academic success and become a revision master!</p>
+
           <hr/>
           <input type="submit" value="Previous Quizzes" name="PreviousQuizzes" class="btn btn-primary"/>
           <br/>
@@ -33,7 +40,7 @@ content %}
     </div>
   </form>
 </div>
-  <div class="col-2"></div>
-  </div>
+<div class="col-2"></div>
+</div>
 
 {% endblock %}
