@@ -15,12 +15,12 @@ content%}
 
 <script type="text/javascript">
   $(function () {
-    $("#autocomplete").autocomplete({
+    $("#searchByQuestions").autocomplete({
       source: function (request, response) {
         $.getJSON(
-          "{{url_for('FlashcardsSection.autocomplete',DeckName=DeckName )}}",
+          "{{url_for('flashcardsSection.searchByQuestions',DeckName=DeckName )}}",
           {
-            q: request.term, // in flask, "q" will be the argument to look for using request.args
+            searchItem: request.term, // in flask, "searchItem" will be the argument to look for using request.args
           },
           function (data) {
             response(data.Questions); // matching_results from jsonify
@@ -29,7 +29,7 @@ content%}
       },
       minLength: 2,
       select: function (event, ui) {
-        console.log(ui.item.value); // not in your question, but might help later
+        console.log(ui.item.value);
       },
     });
   });
@@ -38,9 +38,9 @@ content%}
 <form method="POST" action="/DeleteFlashcards/{{DeckName}}">
   <div>
     <input
-      name="autocomplete"
+      name="searchByQuestions"
       type="text"
-      id="autocomplete"
+      id="searchByQuestions"
       class="form-control input-lg"
     />
   </div>

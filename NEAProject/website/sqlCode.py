@@ -1,23 +1,17 @@
 import sqlite3
 
-
 connection = sqlite3.connect("database.db",check_same_thread=False)
 cursor = connection.cursor()
-
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS FlashcardDeck (
     FlashcardDeckID INTEGER PRIMARY KEY,
     FlashcardDeckName TEXT)
     """)
 
-
 cursor.execute("""CREATE TABLE IF NOT EXISTS ParentFlashcardDeck (
     ParentFlashcardDeckID INTEGER PRIMARY KEY,
     FlashcardDeckName TEXT)
     """)
-
-
-
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS FlashcardsDecksAndUserIDs (
     FlashcardID INTEGER,
@@ -31,14 +25,12 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS FlashcardsDecksAndUserIDs (
     """)
 
 
-
 cursor.execute("""CREATE TABLE IF NOT EXISTS Flashcard (
     FlashcardID INTEGER PRIMARY KEY,
     FlashcardQuestion TEXT,
     FlashcardAnswer TEXT,
     Keywords TEXT)
     """)
-
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS User (
     UserID INTEGER PRIMARY KEY,
@@ -48,7 +40,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS User (
     PasswordAttempts INTEGER,
     EmailConfirmed INTEGER)
     """)
-#Not foreign keys as would mean all days have same ID check
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS Question ( 
     QuestionID INTEGER PRIMARY KEY,
@@ -82,12 +73,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS PastQuiz (
     FOREIGN KEY(UserID) REFERENCES user(UserID),
     FOREIGN KEY(QuizID) REFERENCES Quiz(QuizID))
     """)
-
-
-
-
-
-
 
 connection.commit()
 connection.close()

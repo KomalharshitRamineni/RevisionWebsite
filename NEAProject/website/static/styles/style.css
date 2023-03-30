@@ -8,10 +8,10 @@ a:hover {
 
 .grey-back {
   background-color: #4d4dff;
+  color: white;
 }
 
 .container {
-  background-color: #dee2e6;
   padding: 1rem;
   margin-top: 1rem;
 }
@@ -173,4 +173,63 @@ h3 {
 .btn-group input:hover {
   font-weight: bolder;
   display: block;
+}
+.back-color {
+  background-color: #4d4dff;
+  font-weight: bold;
+}
+.footer {
+  position: absolute;
+  width: 100%;
+  bottom: 0px;
+  left: 0;
+  text-align: center;
+}
+.navbar {
+  position: relative;
+}
+.brand {
+  position: absolute;
+  left: 50%;
+  margin-left: -50px !important; /* 50% of your logo width */
+  display: block;
+  font-size: 30px;
+  font-weight: bold;
+}
+.navbar-light .navbar-brand {
+  color: white !important;
+}
+#brand-name {
+  margin: 7px;
+}
+.navbar-light .navbar-nav .nav-link {
+  color: white !important;
+}
+.navbar .navbar-nav > li > a:hover {
+  color: black !important;
+  font-weight: bold;
+  font-size: larger;
+}
+.styled-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.styled-table thead tr {
+  background-color: #767c7c;
+  color: #e4e7e9;
+  text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+}
+
+.styled-table tbody tr {
+  border-bottom: 1px solid #e4e7e9;
 }

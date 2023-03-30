@@ -1,70 +1,74 @@
 from flask_login import UserMixin
-from .functions import generateKeywords,take_second,removePunc,merge_sort_by_index
+from .functions import generateKeywords,removePunc,merge_sort_by_index
 import random
 import sqlite3
 class User(UserMixin):
     
     def __init__(self, id, firstname, password, email):
-        self._id = id
-        self._firstname = firstname
-        self._password = password
-        self._email = email
-
+        self.__id = id
+        self.__firstname = firstname
+        self.__password = password
+        self.__email = email
 
     def get_id(self):
-        return self._id
+        return self.__id
     
     def get_firstname(self):
-        return self._firstname
+        return self.__firstname
     
     def get_password(self):
-        return self._password
+        return self.__password
     
     def get_email(self):
-        return self._email
+        return self.__email
 
 
 class Flashcard():
-    def __init__(self,FlashcardID,Question,Answer,UserID):
-        self.FlashcardID = FlashcardID
-        self.UserIDBelongsTo = UserID
-        self.Question = Question
-        self.Answer = Answer
-        self.Keywords =  ''
-        self.PossibleQuestionTypes = ['MC','FB','QA','SM']
-        #self.setPossibleQuestionTypes()
+    def __init__(self,flashcardID,question,answer,userID):
+        self.___flashcardID = flashcardID
+        self.__userIDBelongsTo = userID
+        self.__question = question
+        self.__answer = answer
+        self.__keywords =  ''
+        self.__possibleQuestionTypes = ['MC','FB','QA','SM']
+        #Question type : MC - Multiple choice
+        #Question type : FB - Fill in the blanks
+        #Question type : QA - Match question to answer
+        #Question type : SM - Spot the mistake
+        
 
-    def setKeywords(self,Keywords):#this is so that if keywords have already been calculated then no need to recalculate
-        self.Keywords = Keywords
+    def __setKeywords(self,Keywords):
+        self.__keywords = Keywords
+        #If flashcard already has keywords then it can be used by passing them in as a parameter
 
-    def generateKeywords(self):
-        Keywords = generateKeywords(self.Question,self.Answer)
-        self.setKeywords(Keywords)
+    def __generateKeywords(self):
+        #If flashcard does not have any keywords existing the they can be generated
+        Keywords = generateKeywords(self.__question,self.__answer)
+        self.__setKeywords(Keywords)
         
     def getQuestion(self):
-        return self.Question
+        return self.__question
     def getAnswer(self):
-        return self.Answer
+        return self.__answer
     def getKeywords(self):
-        return self.Keywords
+        return self.__keywords
     def getUserID(self):
-        return self.UserIDBelongsTo
+        return self.__userIDBelongsTo
     def getFlashcardID(self):
-        return self.FlashcardID
+        return self.___flashcardID
 
-    def setPossibleQuestionTypes(self):
+    def __setPossibleQuestionTypes(self):
+        #The different types of questions are restriced by number of flashcards which are similar to the current one
         
-        string = self.Keywords
+        string = self.__keywords
         string = string.replace(' ','')
         if string.isnumeric() == True:
-            self.PossibleQuestionTypes.remove('MC')
-            self.PossibleQuestionTypes.remove('QA')
-
-
+            #If the keywords are numbers not keywords then Question type MC and QA are not possible
+            self.__possibleQuestionTypes.remove('MC')
+            self.__possibleQuestionTypes.remove('QA')
 
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
-
 
         cursor.execute("""  SELECT ParentFlashcardDeck.FlashcardDeckName
                             FROM ParentFlashcardDeck,FlashcardsDecksAndUserIDs,Flashcard
@@ -73,36 +77,37 @@ class Flashcard():
                             AND Flashcard.FlashcardID=?
                             AND Flashcard.FlashcardID=FlashcardsDecksAndUserIDs.FlashcardID
                             
-                            """,(self.UserIDBelongsTo,self.FlashcardID,))
-        
-        DeckName = cursor.fetchall()
-        DeckName = list(dict.fromkeys(DeckName))
+                            """,(self.__userIDBelongsTo,self.___flashcardID,))
+        #Query returns the name of the deck to which the flashcards belong to
+        deckName = cursor.fetchall()
+        deckName = list(dict.fromkeys(deckName))
+        #Duplicate values from query are removed
 
+        cursor.execute("""
+    
+                            SELECT Flashcard.FlashcardID,Flashcard.Keywords
+                            FROM Flashcard
+                            JOIN FlashcardsDecksAndUserIDs ON FlashcardsDecksAndUserIDs.FlashcardID = Flashcard.FlashcardID
+                            JOIN ParentFlashcardDeck ON ParentFlashcardDeck.ParentFlashcardDeckID = FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
+                            WHERE FlashcardsDecksAndUserIDs.UserID = ?
+                            AND ParentFlashcardDeck.FlashcardDeckName = ?
 
-        
-        cursor.execute("""  SELECT Flashcard.FlashcardID,Flashcard.Keywords
-                            FROM Flashcard,FlashcardsDecksAndUserIDs,ParentFlashcardDeck
-                            WHERE FlashcardsDecksAndUserIDs.UserID=?
-                            AND FlashcardsDecksAndUserIDs.FlashcardID=Flashcard.FlashcardID
-                            AND ParentFlashcardDeck.FlashcardDeckName=?
-                            AND ParentFlashcardDeck.ParentFlashcardDeckID=FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
-        
-        """,(self.UserIDBelongsTo,DeckName[0][0],))
-        
-        FlashcardIDsAndKeywords = cursor.fetchall()
+        """,(self.__userIDBelongsTo,deckName[0][0]))
+        #Query returns the flashcardIDs and the keywords from the deck specifid
 
-
+        flashcardIDsAndKeywords = cursor.fetchall()
         matchingFlashCards=[]
 
-        for FlashcardIDAndKeywords in FlashcardIDsAndKeywords:
+        for flashcardIDAndKeywords in flashcardIDsAndKeywords:
             matchCount=0
-            for x in self.Keywords.split():
+            for x in self.__keywords.split():
 
-                if x in FlashcardIDAndKeywords[1]:
+                if x in flashcardIDAndKeywords[1]:
                     matchCount=+1
-            if FlashcardIDAndKeywords[1] != self.getKeywords():
-                matchingFlashCards.append((FlashcardIDAndKeywords,matchCount))
-
+            if flashcardIDAndKeywords[1] != self.getKeywords():
+                matchingFlashCards.append((flashcardIDAndKeywords,matchCount))
+        #Matching flashcards are identifed by looking if the contain the same keywords
+        #The match count represents the number of keywords that match between the two flashcards
 
 
         for x in reversed(range(len(matchingFlashCards))):
@@ -111,48 +116,43 @@ class Flashcard():
             string = string.replace(' ','')
             if string.isnumeric() == True or matchingFlashCards[x][1] == 0:
                 matchingFlashCards.pop(x)
+        #If the match count of a flashcard is 0 then the flashcard is removed from the array
+        #If a flashcard contains numbers then the flashcard is removed from the array
 
         matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-
-        #matchingFlashCards.sort(key=take_second)
-        matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
-
-        
-
-
+        #Any duplicate values are removed
+        matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,True)
+        #The flashcards are sorted by their match count giving higher priority to flashcards which have a higher match count
 
         if len(matchingFlashCards) <=3:
-            
-            self.PossibleQuestionTypes.remove('MC')
+            #If there are less than 3 matching flashcards the MC question type is removed from the possible question types
+            self.__possibleQuestionTypes.remove('MC')
 
-        matchingFlashCards=[]
+        # matchingFlashCards=[]
 
-        for FlashcardIDAndKeywords in FlashcardIDsAndKeywords:
-            matchCount=0
-            for x in self.Keywords.split():
-                if x in FlashcardIDAndKeywords[1]:
-                    matchCount=+1
+        # for flashcardIDAndKeywords in flashcardIDsAndKeywords:
+        #     matchCount=0
+        #     for x in self.__keywords.split():
+        #         if x in flashcardIDAndKeywords[1]:
+        #             matchCount=+1
+
+        #     if flashcardIDAndKeywords[1] != self.__keywords:
+        #         matchingFlashCards.append((flashcardIDAndKeywords,matchCount))
+
+        # for x in reversed(range(len(matchingFlashCards))):
 
 
-            if FlashcardIDAndKeywords[1] != self.Keywords:
-                matchingFlashCards.append((FlashcardIDAndKeywords,matchCount))
+        #     string = matchingFlashCards[x][0][1]
+        #     string = string.replace(' ','')
+        #     if string.isnumeric() == True or matchingFlashCards[x][1] == 0:
+        #         matchingFlashCards.pop(x)
 
-        for x in reversed(range(len(matchingFlashCards))):
-
-
-            string = matchingFlashCards[x][0][1]
-            string = string.replace(' ','')
-            if string.isnumeric() == True or matchingFlashCards[x][1] == 0:
-                matchingFlashCards.pop(x)
-
-        matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-        matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
-        #matchingFlashCards.sort(key=take_second)
-
+        # matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
+        # matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
 
         if len(matchingFlashCards) <=1:
-            self.PossibleQuestionTypes.remove('QA')
-
+            #If there are less than 2 matching flashcards then the questiont type QA is removed from the question types
+            self.__possibleQuestionTypes.remove('QA')
 
         keywords = []
 
@@ -163,50 +163,35 @@ class Flashcard():
             for i in keywordsArraySplit:
                 keywords.append(i)
 
-        keywords = list(dict.fromkeys(keywords))
-        if len(keywords) == 0:
-            self.PossibleQuestionTypes.remove('SM')
+        #Gets all the keywords from the flashcards which are similar to the current one and adds to keywords array
 
+        keywords = list(dict.fromkeys(keywords))
+        #Duplicate keywords are removed
+        if len(keywords) == 0:
+            #If there are no keywords then the question type SM is removed
+            self.__possibleQuestionTypes.remove('SM')
 
         keywordInAnswer = False
-        for x in self.Keywords.split():
-            if x in self.Answer.lower():
+        for x in self.__keywords.split():
+            if x in self.__answer.lower():
                 keywordInAnswer = True
 
         if keywordInAnswer == False:
-
-            self.PossibleQuestionTypes.remove('SM')
+            #If the keyword from the current flashcard is not in the answer then the question type SM is removed
+            self.__possibleQuestionTypes.remove('SM')
 
         keywordInAnswer = False
         for x in keywords:
-            if x in self.Answer.lower():
+            if x in self.__answer.lower():
                 keywordInAnswer = True
 
         if keywordInAnswer == False:
-
-            if 'SM' in self.PossibleQuestionTypes:
-                self.PossibleQuestionTypes.remove('SM')
-
-
-
-
-
+            #If the keyword from the matching flashcard is not in the answer then the question type SM is removed
+            if 'SM' in self.__possibleQuestionTypes :#Checks to see if the question type has been removed already
+                self.__possibleQuestionTypes.remove('SM')
 
     def getPossibleQuestionTypes(self):
-        return self.PossibleQuestionTypes
-
-
-
-#Check if keywords are numbers - limmited to fill in the blank or spot the mistake
-#Otherwise can be any
-
-
-
-
-
-
-
-#question types = fill in the blanks,multiple choice,spot mistake,match question to answer
+        return self.__possibleQuestionTypes
 
 
 
@@ -234,241 +219,246 @@ class Stack:
          random.shuffle(self.items)
 
 
-class FlashcardDeck:#composition relationship
+class FlashcardDeck:
     def __init__(self):
-        self.FlashcardDeck = Stack()
-        self.UsedFlashcards = Stack() 
+        self.__flashcardDeck = Stack() #Composition relationship
+        self.__usedFlashcards = Stack() 
 
-    def AddToFlashcardDeck(self,flashcard):
-        self.FlashcardDeck.push(flashcard)
+    def __addToFlashcardDeck(self,flashcard):
+        self.__flashcardDeck.push(flashcard)
 
-    def GetFlashcardDeck(self):
-        return self.FlashcardDeck
+    def __getFlashcardDeck(self):
+        return self.__flashcardDeck
 
-    def AddToUsedFlashcards(self,flashcard):
-        self.UsedFlashcards.push(flashcard)
+    def __addToUsedFlashcards(self,flashcard):
+        self.__usedFlashcards.push(flashcard)
 
-    def GetUsedFlashcards(self):
-        return self.UsedFlashcards
+    def __getUsedFlashcards(self):
+        return self.__usedFlashcards
     
-    def UseFlashcard(self):
-        flashcard = self.FlashcardDeck.pop()
-        self.AddToUsedFlashcards(flashcard=flashcard)
+    def __useFlashcard(self):#This function gets the next flashcard and moves it to the used flashcards stack
+        flashcard = self.__flashcardDeck.pop()
+        self.__addToUsedFlashcards(flashcard=flashcard)
         return flashcard
 
-    def UndoFlashcardUse(self):
-        flashcard = self.UsedFlashcards.pop()
-        self.AddToFlashcardDeck(flashcard=flashcard)
+    def __undoFlashcardUse(self):#this function removes the flashcard from the used stack and pushes it onto flashcards stack
+        flashcard = self.__usedFlashcards.pop()
+        self.__addToFlashcardDeck(flashcard=flashcard)
 
-    def PeekFlashcardDeck(self):
-        return self.FlashcardDeck.peek()
-    def PeekUsedFlashcards(self):
-        return self.UsedFlashcards.peek()
+    def __peekFlashcardDeck(self):
+        return self.__flashcardDeck.peek()#Returns top item in flashcard stack
+    def __peekUsedFlashcards(self):
+        return self.__usedFlashcards.peek()#Returns top item in used flashcards stack
 
-    def ShuffleDeck(self):
-        self.FlashcardDeck.shuffle()
+    def __shuffleDeck(self):
+        self.__flashcardDeck.shuffle()#items in stack are shuffled randomly
+
 
 
 class Quiz():
-    def __init__(self,UserID,DeckName,NumberOfQuestions):
-        self.QuizID = self.setQuizID()
-        self.Questions = Stack()
-        self.CompletedQuestions = Stack()
-        self.NumberOfQuestions = NumberOfQuestions
-        self.DeckName = DeckName
-        self.UserID = UserID
-        self.createQuiz()
+    def __init__(self,UserID,deckName,numberOfQuestions):
+        self.__quizID = self.__setQuizID()
+        self.__questions = Stack()#Composition relationship
+        self.__completedQuestions = Stack()
+        self.__numberOfQuestions = numberOfQuestions
+        self.__deckName = deckName
+        self.__userID = UserID
+        self.__createQuiz()
         
-    def getQuizID(self):
-        return self.QuizID
+    def __getQuizID(self):
+        return self.__quizID
 
-    def setQuizID(self):
+    def __setQuizID(self):
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
         cursor.execute("SELECT COUNT(QuizID) FROM Quiz")
-        NumberOfQuizIDs = cursor.fetchall()#
-        NextQuizID = int(NumberOfQuizIDs[0][0]) + 1
-        return NextQuizID
+        #The quiz id is a primary key and is auto incremented
+        #The quiz items are also not deleted
+        #The next quiz id can be found by looking at the number of quizzes
+        numberOfQuizIDs = cursor.fetchall()
+        nextQuizID = int(numberOfQuizIDs[0][0]) + 1
+        return nextQuizID
 
-    def NextQuestion(self):
-        completedQuestion = self.Questions.pop()
-        self.CompletedQuestions.push(completedQuestion)
+    def __nextQuestion(self):
+        completedQuestion = self.__questions.pop()
+        self.__completedQuestions.push(completedQuestion)
+        #Next question is removed from questions stack and pushed onto completed questions stack
         return completedQuestion
-    def PreviewNextQuestion(self):
-        return self.Questions.peek()
-    def getQuestions(self):
-        return self.Questions
-    def getCompletedQuestions(self):
-        return self.CompletedQuestions
+    def __previewNextQuestion(self):
+        return self.__questions.peek()
+    def __getQuestions(self):
+        return self.__questions
+    def __getCompletedQuestions(self):
+        return self.__completedQuestions
     
-    def returnFlashcardIds(self):
+    def __returnFlashcardIds(self):
         
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
-        cursor.execute("""  SELECT Flashcard.FlashcardID
-                            FROM Flashcard,FlashcardsDecksAndUserIDs,ParentFlashcardDeck
-                            WHERE FlashcardsDecksAndUserIDs.UserID=?
-                            AND FlashcardsDecksAndUserIDs.FlashcardID=Flashcard.FlashcardID
-                            AND ParentFlashcardDeck.FlashcardDeckName=?
-                            AND ParentFlashcardDeck.ParentFlashcardDeckID=FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
-        
-        """,(self.UserID,self.DeckName,))
+        cursor.execute("""SELECT Flashcard.FlashcardID
+                        FROM Flashcard
+                        JOIN FlashcardsDecksAndUserIDs ON FlashcardsDecksAndUserIDs.FlashcardID = Flashcard.FlashcardID
+                        JOIN ParentFlashcardDeck ON ParentFlashcardDeck.ParentFlashcardDeckID = FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
+                        WHERE FlashcardsDecksAndUserIDs.UserID = ? AND ParentFlashcardDeck.FlashcardDeckName = ?
+                    """, (self.__userID, self.__deckName,))
 
+        flashcardIDs = cursor.fetchall()
+        #Query returns the name of the deck to which the flashcards belong to
+        if len(flashcardIDs) == 0:
 
-        FlashcardIDs = cursor.fetchall()
-
-        if len(FlashcardIDs) == 0:
-            cursor.execute("""  SELECT Flashcard.FlashcardID
-                    FROM Flashcard,FlashcardsDecksAndUserIDs,FlashcardDeck
-                    WHERE FlashcardsDecksAndUserIDs.UserID=?
-                    AND FlashcardsDecksAndUserIDs.FlashcardID=Flashcard.FlashcardID
-                    AND FlashcardDeck.FlashcardDeckName=?
-                    AND FlashcardDeck.FlashcardDeckID=FlashcardsDecksAndUserIDs.FlashcardDeckID""",(self.UserID,self.DeckName,))#Checks if parent deck
-            FlashcardIDs = cursor.fetchall()
+            cursor.execute("""
+                SELECT Flashcard.FlashcardID
+                FROM Flashcard
+                JOIN FlashcardsDecksAndUserIDs ON FlashcardsDecksAndUserIDs.FlashcardID = Flashcard.FlashcardID
+                JOIN FlashcardDeck ON FlashcardDeck.FlashcardDeckID = FlashcardsDecksAndUserIDs.FlashcardDeckID
+                WHERE FlashcardsDecksAndUserIDs.UserID = ?
+                AND FlashcardDeck.FlashcardDeckName = ?
+            """, (self.__userID, self.__deckName,))
+            #Query returns the flashcardIDs and the keywords from the deck specified
+            flashcardIDs = cursor.fetchall()
 
         connection.close()
-        return FlashcardIDs
+        return flashcardIDs
 
 
-    def createQuiz(self):#check if deck is parent or child, for now default to parent
+    def __createQuiz(self):
 
-        FlashcardIDs = self.returnFlashcardIds()
+        flashcardIDs = self.__returnFlashcardIds()
         
-
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
-        cursor.execute("""  SELECT Question.QuestionID,Question.QuestionType,Question.Question,Question.Answer,Question.CorrectAnswer,Question.FlashcardID
-                            FROM QuizQuestions,PastQuiz,Question
-                            WHERE PastQuiz.UserID=?
-                            AND PastQuiz.QuizID=QuizQuestions.QuizID 
-                            AND QuizQuestions.QuestionID=Question.QuestionID
-        """,(self.UserID,))
-        QuestionsDoneByUser = cursor.fetchall()
-        QuestionsDoneByUser = list(dict.fromkeys(QuestionsDoneByUser))
+        cursor.execute("""  SELECT Question.QuestionID, Question.QuestionType, Question.Question, Question.Answer,Question.CorrectAnswer, Question.FlashcardID
+                            FROM PastQuiz
+                            JOIN QuizQuestions ON PastQuiz.QuizID = QuizQuestions.QuizID 
+                            JOIN Question ON QuizQuestions.QuestionID = Question.QuestionID
+                            WHERE PastQuiz.UserID = ?
+                """,(self.__userID,))
 
+        questionsDoneByUser = cursor.fetchall()
+        questionsDoneByUser = list(dict.fromkeys(questionsDoneByUser))
 
+        #Questions completed by the user are queried
 
+        random.shuffle(flashcardIDs)#The flashcardIds are randomised as the quiz is randomly generated
+        flashcardIDs=flashcardIDs[:int(self.__numberOfQuestions)]
+        for flashcardID in flashcardIDs:
 
+            cursor.execute("SELECT FlashcardQuestion,FlashcardAnswer,Keywords FROM Flashcard WHERE FlashcardID=?",(flashcardID[0],))
+            questionAnswerAndKeywords = cursor.fetchall()
+            #Query returs the details of a flashcard given the flashcardID
 
-        random.shuffle(FlashcardIDs)
-        FlashcardIDs=FlashcardIDs[:int(self.NumberOfQuestions)]
-        for FlashcardID in FlashcardIDs:
+            flashcardObject = Flashcard(flashcardID[0],questionAnswerAndKeywords[0][0],questionAnswerAndKeywords[0][1],self.__userID)
+            flashcardObject.__setKeywords(questionAnswerAndKeywords[0][2])
+            #flashcard object is created and the keywords are set
+            flashcardObject.__setPossibleQuestionTypes()
+            #The possible question types for the flashcard are calculated
+            questionTypes = flashcardObject.getPossibleQuestionTypes()
+            #The possible question types are retuned
+            random.shuffle(questionTypes)
+            #The question types are randomised as the type of question should be random
+            questionType=questionTypes[0]
 
+            quizQuestionObject = QuizQuestion(questionType,flashcardObject,self.__deckName)
+            self.__questions.push(quizQuestionObject)
+            #Stack is updated with the question object created
 
-            cursor.execute("SELECT FlashcardQuestion,FlashcardAnswer,Keywords FROM Flashcard WHERE FlashcardID=?",(FlashcardID[0],))
-            QuestionAnswerAndKeywords = cursor.fetchall()
+            questionAlreadyExists = False
+            questionIdOfDuplicateQuestion = None
 
-            FlashcardObject = Flashcard(FlashcardID[0],QuestionAnswerAndKeywords[0][0],QuestionAnswerAndKeywords[0][1],self.UserID)
-            FlashcardObject.setKeywords(QuestionAnswerAndKeywords[0][2])
-            FlashcardObject.setPossibleQuestionTypes()
-            QuestionTypes = FlashcardObject.getPossibleQuestionTypes()
-            random.shuffle(QuestionTypes)
-            QuestionType=QuestionTypes[0]
-
-            
-            QuizQuestionObject = QuizQuestion(QuestionType,FlashcardObject,self.DeckName)
-            self.Questions.push(QuizQuestionObject)
-
-#check here
-            QuestionAlreadyExists = False
-
-            QuestionIdOfDuplicateQuestion = None
-
-            for Question in QuestionsDoneByUser:
-                QuestionIDOfQuestion = Question[0]
-                QuestionTypeOfQuestion = Question[1]
-   
+            for question in questionsDoneByUser:
+                questionIDOfQuestion = question[0]
+                questionTypeOfQuestion = question[1]
+                #when questions are stored in the database they are turned into strings before storing
+                #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                 try:
-                    QuestionFromQuestion = eval(Question[2])
+                    questionFromQuestion = eval(question[2])
                 except:
-                    QuestionFromQuestion = Question[2]
-
-                try:
-                    AnswerFromQuestion = eval(Question[3])
-                except:
-                    AnswerFromQuestion = Question[3]
+                    questionFromQuestion = question[2]
 
                 try:
-                    CorrectAnswerFromQuestion = eval(Question[4])
+                    answerFromQuestion = eval(question[3])
                 except:
-                    CorrectAnswerFromQuestion = Question[4]
+                    answerFromQuestion = question[3]
 
-                #FlashcardIdOfQuestion = Question[5]
+                try:
+                    correctAnswerFromQuestion = eval(question[4])
+                except:
+                    correctAnswerFromQuestion = question[4]
 
-                if QuizQuestionObject.getQuestionType() == QuestionTypeOfQuestion and QuizQuestionObject.getQuestion() == QuestionFromQuestion and QuizQuestionObject.getAnswer() == AnswerFromQuestion and QuizQuestionObject.getCorrectAnswer() == CorrectAnswerFromQuestion:
-                    QuestionAlreadyExists = True
-                    QuestionIdOfDuplicateQuestion = int(QuestionIDOfQuestion)
+                if quizQuestionObject.getQuestionType() == questionTypeOfQuestion and quizQuestionObject.getQuestion() == questionFromQuestion and quizQuestionObject.getAnswer() == answerFromQuestion and quizQuestionObject.getCorrectAnswer() == correctAnswerFromQuestion:
+                    questionAlreadyExists = True
+                    questionIdOfDuplicateQuestion = int(questionIDOfQuestion)
+                    #If the question that has been generated already exists in the database then the one stored in the database needs to be used instead
 
-
-            if QuestionAlreadyExists == True:
-                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.getQuizID(),QuestionIdOfDuplicateQuestion,))
+            if questionAlreadyExists == True:
+                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.__getQuizID(),questionIdOfDuplicateQuestion,))
                 connection.commit()
-                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.UserID,self.getQuizID(),))
+                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.__userID,self.__getQuizID(),))
                 connection.commit()
-
+                #If question already exists in the database then the Question table is not updated
             else:
+                #If the question created is new however, the Question table is updated
+                cursor.execute("INSERT INTO Question(QuestionID,NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly,QuestionType,Question,Answer,CorrectAnswer,FlashcardID) values(?,?,?,?,?,?,?,?)",(quizQuestionObject.getQuestionID(),0,0,quizQuestionObject.getQuestionType(),str(quizQuestionObject.getQuestion()),str(quizQuestionObject.getAnswer()),str(quizQuestionObject.getCorrectAnswer()),flashcardObject.getFlashcardID(),))
+                connection.commit()
+                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.__getQuizID(),quizQuestionObject.getQuestionID(),))
+                connection.commit()
+                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.__userID,self.__getQuizID(),))
+                connection.commit()
 
-                cursor.execute("INSERT INTO Question(QuestionID,NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly,QuestionType,Question,Answer,CorrectAnswer,FlashcardID) values(?,?,?,?,?,?,?,?)",(QuizQuestionObject.getQuestionID(),0,0,QuizQuestionObject.getQuestionType(),str(QuizQuestionObject.getQuestion()),str(QuizQuestionObject.getAnswer()),str(QuizQuestionObject.getCorrectAnswer()),FlashcardObject.getFlashcardID(),))
-                connection.commit()
-                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.getQuizID(),QuizQuestionObject.getQuestionID(),))
-                connection.commit()
-                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.UserID,self.getQuizID(),))
-                connection.commit()
+        connection.close()
 
-        connection.close()#link userID at other side
 
 
 class QuizQuestion():
-    def __init__(self,Type,Flashcard,DeckName):
-        self.QuestionID = self.setQuestionID()
-        self.type = Type
-        self.DeckName = DeckName
-        self.Flashcard = Flashcard
-        self.questionToDisplay = None
-        self.answersToDisplay = None
-        self.correctAnswer = None
-        self.UserID = self.Flashcard.getUserID()
-        self.FlashcardID = self.Flashcard.getFlashcardID()
-        self.createQuestion()
+    def __init__(self,Type,Flashcard,deckName):
+        self.__questionID = self.__setQuestionID()
+        self.__type = Type
+        self.__deckName = deckName
+        self.__flashcard = Flashcard
+        self.__questionToDisplay = None
+        self.__answersToDisplay = None
+        self.__correctAnswer = None
+        self.__userID = self.__flashcard.getUserID()
+        self.___flashcardID = self.__flashcard.getFlashcardID()
+        self.__createQuestion()
 
     def getQuestionID(self):
-        return self.QuestionID
+        return self.__questionID
     
-    def setQuestionID(self):
+    def __setQuestionID(self):
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
         cursor.execute("SELECT COUNT(QuestionID) FROM Question")
-        NumberOfQuestions = cursor.fetchall()
-        NextQuestionID = int(NumberOfQuestions[0][0]) + 1
-        return NextQuestionID
-
+        numberOfQuestions = cursor.fetchall()
+        nextQuestionID = int(numberOfQuestions[0][0]) + 1
+        #The QuestionID id is a primary key and is auto incremented
+        #The QuestionS items are also not deleted
+        #The next QuestionID id can be found by looking at the number of quizzes
+        return nextQuestionID
+    
 
     def getFlashcardIDsAndKeywords(self):
-
 
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
 
-            cursor.execute("""  SELECT ParentFlashcardDeck.FlashcardDeckName
-                                FROM ParentFlashcardDeck,FlashcardsDecksAndUserIDs,FlashcardDeck
-                                WHERE FlashcardDeck.FlashcardDeckName =?
-                                AND FlashcardsDecksAndUserIDs.UserID=?
-                                AND FlashcardsDecksAndUserIDs.FlashcardDeckID = FlashcardDeck.FlashcardDeckID
-                                AND ParentFlashcardDeck.ParentFlashcardDeckID=FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
-
-                        """,(self.DeckName,self.UserID,))
+            cursor.execute("""SELECT ParentFlashcardDeck.FlashcardDeckName
+                            FROM FlashcardDeck
+                            JOIN FlashcardsDecksAndUserIDs ON FlashcardsDecksAndUserIDs.FlashcardDeckID = FlashcardDeck.FlashcardDeckID
+                            JOIN ParentFlashcardDeck ON ParentFlashcardDeck.ParentFlashcardDeckID = FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
+                            WHERE FlashcardDeck.FlashcardDeckName = ?
+                            AND FlashcardsDecksAndUserIDs.UserID = ?""",
+                        (self.__deckName, self.__userID,))
+            #Query returns the name of the deck to which the flashcards belong to
+            parentFlashcardDeckName = cursor.fetchall()
+            parentFlashcardDeckName = list(dict.fromkeys(parentFlashcardDeckName))
             
-            ParentFlashcardDeckName = cursor.fetchall()
-            ParentFlashcardDeckName = list(dict.fromkeys(ParentFlashcardDeckName))
-            
-            if len(ParentFlashcardDeckName) == 0:
-                DeckName = self.DeckName
+            if len(parentFlashcardDeckName) == 0:
+                deckName = self.__deckName
             else:
-                DeckName = ParentFlashcardDeckName[0][0]
-
-            
+                deckName = parentFlashcardDeckName[0][0]
 
             cursor.execute("""  SELECT Flashcard.FlashcardID,Flashcard.Keywords
                                 FROM Flashcard,FlashcardsDecksAndUserIDs,ParentFlashcardDeck
@@ -477,38 +467,38 @@ class QuizQuestion():
                                 AND ParentFlashcardDeck.FlashcardDeckName=?
                                 AND ParentFlashcardDeck.ParentFlashcardDeckID=FlashcardsDecksAndUserIDs.ParentFlashcardDeckID
             
-            """,(self.UserID,DeckName,))
-            
-            FlashcardIDsAndKeywords = cursor.fetchall()
+            """,(self.__userID,deckName,))
+            #Query returns the flashcardIDs and the keywords from the deck specified
+            flashcardIDsAndKeywords = cursor.fetchall()
             connection.close()
-            return FlashcardIDsAndKeywords
+            return flashcardIDsAndKeywords
 
 
-#Fix ParentFalshcard Deckname
+    def __createQuestion(self):
 
-    def createQuestion(self):
+        if self.__type == 'MC':
 
-        if self.type == 'MC':
+            self.__questionToDisplay=self.__flashcard.getQuestion()
+            self.__correctAnswer=self.__flashcard.getAnswer()
 
-            self.questionToDisplay=self.Flashcard.getQuestion()
-            self.correctAnswer=self.Flashcard.getAnswer()
-
-
-            FlashcardIDsAndKeywords = self.getFlashcardIDsAndKeywords()
-
+            flashcardIDsAndKeywords = self.getFlashcardIDsAndKeywords()
 
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
 
             matchingFlashCards=[]
 
-            for FlashcardIDAndKeywords in FlashcardIDsAndKeywords:
+            for flashcardIDAndKeywords in flashcardIDsAndKeywords:
                 matchCount=0
-                for x in self.Flashcard.getKeywords().split():
-                    if x in FlashcardIDAndKeywords[1]:
+                for x in self.__flashcard.getKeywords().split():
+                    if x in flashcardIDAndKeywords[1]:
                         matchCount=+1
-                if FlashcardIDAndKeywords[1] != self.Flashcard.getKeywords():
-                    matchingFlashCards.append((FlashcardIDAndKeywords,matchCount))
+                if flashcardIDAndKeywords[1] != self.__flashcard.getKeywords():
+                    matchingFlashCards.append((flashcardIDAndKeywords,matchCount))
+
+            #Matching flashcards are identifed by looking if the contain the same keywords
+            #The match count represents the number of keywords that match between the two flashcards
+
 
             for x in reversed(range(len(matchingFlashCards))):
 
@@ -516,126 +506,126 @@ class QuizQuestion():
                 string = string.replace(' ','')
                 if string.isnumeric() == True or matchingFlashCards[x][1] == 0:
                     matchingFlashCards.pop(x)
+            #If the match count of a flashcard is 0 then the flashcard is removed from the array
 
             matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-            #matchingFlashCards.sort(key=take_second)
-            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
-            AnswersToDisplay = [self.correctAnswer]
+            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,True)
+            #The flashcards are sorted by their match count giving higher priority to flashcards which have a higher match count
+            answersToDisplay = [self.__correctAnswer]
 
             for x in range(len(matchingFlashCards)):
                 if x<=2:
                     cursor.execute("SELECT FlashcardAnswer FROM Flashcard WHERE FlashcardID=?",(matchingFlashCards[x][0][0],))
                     answer = cursor.fetchall()
+                    #The answer to the matching flashcard is queried with the corresponding Flashcard ID and added to the list
+                    answersToDisplay.append(answer[0][0])
 
-                    AnswersToDisplay.append(answer[0][0])
-
-            self.answersToDisplay = AnswersToDisplay
+            self.__answersToDisplay = answersToDisplay
             connection.close()
 
 
+        if self.__type == 'FB':
+            self.__questionToDisplay=self.__flashcard.getQuestion()
 
+            self.__answersToDisplay=self.__flashcard.getAnswer()
 
-        if self.type == 'FB':
-            self.questionToDisplay=self.Flashcard.getQuestion()
-
-            self.answersToDisplay=self.Flashcard.getAnswer()
-
-            KeywordsArray = self.Flashcard.getKeywords().split()
+            keywordsArray = self.__flashcard.getKeywords().split()
             randomNum = random.randint(0,2)
 
-            self.correctAnswer=KeywordsArray[randomNum]
+            self.__correctAnswer=keywordsArray[randomNum]
             placeholder=''
 
-            for x in self.correctAnswer:
+            for x in self.__correctAnswer:
                 placeholder = placeholder+'_'
 
+            for x in self.__answersToDisplay.split():
 
-            for x in self.answersToDisplay.split():
+                if removePunc(x.lower()) == self.__correctAnswer:
+                    self.__answersToDisplay = self.__answersToDisplay.replace(x,placeholder)
+                #If the word to fill in the blank with is in the question then it is replaced with a place holder
 
-                if removePunc(x.lower()) == self.correctAnswer:
-                    
-                    self.answersToDisplay = self.answersToDisplay.replace(x,placeholder)
-
-            for x in self.questionToDisplay.split():
-                if removePunc(x.lower()) == self.correctAnswer:
-                    self.questionToDisplay = self.questionToDisplay.replace(x,placeholder)
-
-
+            for x in self.__questionToDisplay.split():
+                if removePunc(x.lower()) == self.__correctAnswer:
+                    self.__questionToDisplay = self.__questionToDisplay.replace(x,placeholder)
+                #If the word to fill in the blank with is in the answer then it is replaced with a place holder
 
 
-        if self.type == 'QA':
+        if self.__type == 'QA':
 
-
-            FlashcardIDsAndKeywords = self.getFlashcardIDsAndKeywords()
-
+            flashcardIDsAndKeywords = self.getFlashcardIDsAndKeywords()
 
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
             matchingFlashCards=[]
 
-            for FlashcardIDAndKeywords in FlashcardIDsAndKeywords:
+            for flashcardIDAndKeywords in flashcardIDsAndKeywords:
                 matchCount=0
-                for x in self.Flashcard.getKeywords().split():
-                    if x in FlashcardIDAndKeywords[1]:
+                for x in self.__flashcard.getKeywords().split():
+                    if x in flashcardIDAndKeywords[1]:
                         matchCount=+1
-                if FlashcardIDAndKeywords[1] != self.Flashcard.getKeywords():
-                    matchingFlashCards.append((FlashcardIDAndKeywords,matchCount))
+                if flashcardIDAndKeywords[1] != self.__flashcard.getKeywords():
+                    matchingFlashCards.append((flashcardIDAndKeywords,matchCount))
 
+                #Matching flashcards are identifed by looking if the contain the same keywords
+                #The match count represents the number of keywords that match between the two flashcards
+
+        
             for x in reversed(range(len(matchingFlashCards))):
-
 
                 string = matchingFlashCards[x][0][1]
                 string = string.replace(' ','')
                 if string.isnumeric() == True or matchingFlashCards[x][1] == 0:
                     matchingFlashCards.pop(x)
+                #If the match count of a flashcard is 0 then the flashcard is removed from the array
 
             matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
-            #matchingFlashCards.sort(key=take_second)#sort by taking highst matching score
-            AnswersToDisplay = [self.Flashcard.getAnswer()]
-            QuestionsToDisplay = [self.Flashcard.getQuestion()]
+            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,True)
+            #The flashcards are sorted by their match count giving higher priority to flashcards which have a higher match count
+            answersToDisplay = [self.__flashcard.getAnswer()]
+            questionsToDisplay = [self.__flashcard.getQuestion()]
             correctAnswer={}
-            correctAnswer.update({self.Flashcard.getQuestion():self.Flashcard.getAnswer()})
+            correctAnswer.update({self.__flashcard.getQuestion():self.__flashcard.getAnswer()})
+            #The question and answer from the current flashcard are added to the correct answer dictionary
+
             for x in range(len(matchingFlashCards)):
-                if x<=1:
+                if x<=1:#Only takes 2 more matching flashcards
                     cursor.execute("SELECT FlashcardQuestion,FlashcardAnswer FROM Flashcard WHERE FlashcardID=?",(matchingFlashCards[x][0][0],))
-                    QuestionAndAnswer = cursor.fetchall()
-
-                    AnswersToDisplay.append(QuestionAndAnswer[0][1])
-                    QuestionsToDisplay.append(QuestionAndAnswer[0][0])
-                    correctAnswer.update({QuestionAndAnswer[0][0]:QuestionAndAnswer[0][1]})
-
-            self.answersToDisplay = AnswersToDisplay
-            self.questionToDisplay = QuestionsToDisplay
-            random.shuffle(self.answersToDisplay)
-            random.shuffle(self.questionToDisplay)
-            self.correctAnswer = correctAnswer
+                    questionAndAnswer = cursor.fetchall()
+                    #The question and answer from the matching flashcard is queried
+                    answersToDisplay.append(questionAndAnswer[0][1])
+                    questionsToDisplay.append(questionAndAnswer[0][0])
+                    correctAnswer.update({questionAndAnswer[0][0]:questionAndAnswer[0][1]})
+                    #correct answer dictionary updated with another question and answer
+            self.__answersToDisplay = answersToDisplay
+            self.__questionToDisplay = questionsToDisplay
+            random.shuffle(self.__answersToDisplay)#questions and answers shuffled so they are random
+            random.shuffle(self.__questionToDisplay)
+            self.__correctAnswer = correctAnswer
         
             connection.close()
 
-        
 
-        if self.type == 'SM':
+        if self.__type == 'SM':
 
-            self.questionToDisplay=self.Flashcard.getQuestion()
-            self.correctAnswer=self.Flashcard.getAnswer()
-            self.answersToDisplay=self.Flashcard.getAnswer()
-            FlashcardIDsAndKeywords = self.getFlashcardIDsAndKeywords()
-
+            self.__questionToDisplay=self.__flashcard.getQuestion()
+            self.__correctAnswer=self.__flashcard.getAnswer()
+            self.__answersToDisplay=self.__flashcard.getAnswer()
+            flashcardIDsAndKeywords = self.getFlashcardIDsAndKeywords()
 
             matchingFlashCards=[]
 
-            for FlashcardIDAndKeywords in FlashcardIDsAndKeywords:
-
+            for flashcardIDAndKeywords in flashcardIDsAndKeywords:
                 matchCount=0
+                for x in self.__flashcard.getKeywords().split():
 
-                for x in self.Flashcard.getKeywords().split():
-
-                    if x in FlashcardIDAndKeywords[1]:
+                    if x in flashcardIDAndKeywords[1]:
                         matchCount=+1
 
-                if FlashcardIDAndKeywords[1] != self.Flashcard.getKeywords():
-                    matchingFlashCards.append((FlashcardIDAndKeywords,matchCount))
+                if flashcardIDAndKeywords[1] != self.__flashcard.getKeywords():
+                    matchingFlashCards.append((flashcardIDAndKeywords,matchCount))
+
+                    #Matching flashcards are identifed by looking if the contain the same keywords
+                    #The match count represents the number of keywords that match between the two flashcards
 
             for x in reversed(range(len(matchingFlashCards))):
 
@@ -643,10 +633,10 @@ class QuizQuestion():
                 string = string.replace(' ','')
                 if string.isnumeric() == True or int(matchingFlashCards[x][1]) == 0:
                     matchingFlashCards.pop(x)
-
+                #If the match count of a flashcard is 0 then the flashcard is removed from the array
             matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
-            #matchingFlashCards.sort(key=take_second)
+            matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,True)
+            #The flashcards are sorted by their match count giving higher priority to flashcards which have a higher match count
 
             keywords = []
 
@@ -657,42 +647,46 @@ class QuizQuestion():
                 for i in keywordsArraySplit:
                     keywords.append(i)
 
+            #Gets all the keywords from the flashcards which are similar to the current one and adds to keywords array
             keywords = list(dict.fromkeys(keywords))
-
+            #Duplicate keywords are removed
             randomNum = random.randint(0,(len(keywords)-1))
             incorrectWord = keywords[randomNum]
-
-            KeywordsArray = self.Flashcard.getKeywords().split()
+            #A random keyword is chosen to be the mistake
+            keywordsArray = self.__flashcard.getKeywords().split()
             randomNum = random.randint(0,2)
-            randomKeywordFromQuestion = KeywordsArray[randomNum]
+            randomKeywordFromQuestion = keywordsArray[randomNum]
 
             wordToReplace = randomKeywordFromQuestion
+            #A random keyword from the question is chosen to be replaced with the mistake
 
-            for x in range(len(self.answersToDisplay.split())):
-                if self.answersToDisplay.lower().split()[x] == randomKeywordFromQuestion:
-                    wordToReplace=self.answersToDisplay.split()[x]
+            for x in range(len(self.__answersToDisplay.split())):
+                if self.__answersToDisplay.lower().split()[x] == randomKeywordFromQuestion:
+                    wordToReplace=self.__answersToDisplay.split()[x]
 
             while wordToReplace == incorrectWord:
+                #In the case that the random words chosen are the same then it needs to repeat until different words are chosen
+
                 randomNum = random.randint(0,(len(keywords)-1))
                 incorrectWord = keywords[randomNum]
-                KeywordsArray = self.Flashcard.getKeywords().split()
+                keywordsArray = self.__flashcard.getKeywords().split()
                 randomNum = random.randint(0,2)
-                randomKeywordFromQuestion = KeywordsArray[randomNum]
+                randomKeywordFromQuestion = keywordsArray[randomNum]
                 wordToReplace = randomKeywordFromQuestion
 
-                for x in range(len(self.answersToDisplay.split())):
-                    if self.answersToDisplay.lower().split()[x] == randomKeywordFromQuestion:
-                        wordToReplace=self.answersToDisplay.split()[x]
-
-            self.answersToDisplay = self.answersToDisplay.replace(wordToReplace,incorrectWord,1)
+                for x in range(len(self.__answersToDisplay.split())):
+                    if self.__answersToDisplay.lower().split()[x] == randomKeywordFromQuestion:
+                        wordToReplace=self.__answersToDisplay.split()[x]
 
 
+            self.__answersToDisplay = self.__answersToDisplay.replace(wordToReplace,incorrectWord,1)
+            #The question that is being displayed is altered so there is a mistake
 
     def getQuestionType(self):
-        return self.type
+        return self.__type
     def getQuestion(self):
-        return self.questionToDisplay
+        return self.__questionToDisplay
     def getAnswer(self):
-        return self.answersToDisplay
+        return self.__answersToDisplay
     def getCorrectAnswer(self):
-        return self.correctAnswer
+        return self.__correctAnswer

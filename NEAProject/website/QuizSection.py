@@ -14,109 +14,116 @@ def generate_unique_code(length):
         if code not in rooms:
             break
     return code
+    #Random string is generated with a length of 4
 
+quizSection = Blueprint('quizSection',__name__)
 
-QuizSection = Blueprint('QuizSection',__name__)
-
-UserAndQuizObjects = []
-AllQuizQuestions = []
+userAndQuizObjects = []
+allQuizQuestionsSingleplayers = []
+allQuizQuestionsMultiplayer = []
 
 rooms = {}
-UserScores = {}
+userScores = {}
 
 
 
-
-
-
-@QuizSection.route('/quizMenu',  methods=['GET', 'POST'])
+@quizSection.route('/quizMenu',  methods=['GET', 'POST'])
 @login_required
 def quizMenu():
     UserID =current_user.get_id()
-    session.clear()#remove from dict UserScores where Userid=?
+    session.clear()
     if request.method == 'POST':
         if request.form.get('TakeQuiz') == 'Take Quiz':
-            return redirect(url_for("QuizSection.quizMenchooseDeckToQuizOnu"))
+            #If user presses the button to take a quiz
+            return redirect(url_for("quizSection.quizMenchooseDeckToQuizOn"))
         
         if request.form.get('PreviousQuizzes') == 'Previous Quizzes':
-            return redirect(url_for("QuizSection.viewPastQuizzes"))
-
+            #If the user presses the button to see previous quizzes
+            return redirect(url_for("quizSection.viewPastQuizzes"))
 
         else:
-
+            #If the user presses button to either host or join a quiz
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
             cursor.execute("SELECT Firstname FROM User WHERE UserID=?",(UserID,))
-            connection.close()
-
             name = cursor.fetchall()[0][0]
             code = request.form.get("code")
             join = request.form.get("join", False)
             create = request.form.get("create", False)
             quizID = request.form.get("QuizID")
-
-
+            #Form data is recieved
+            connection.close()
+            
             if join != False and not code:
+                #If user has not entered a code to join the quiz
                 flash("You have not entered a code for the Quiz")
                 return render_template("quizMenu.html",user=current_user, code=code)
 
             room = code
-
-            if rooms[room].get("QuizID") == quizID:
-                flash('There is already a quiz ongoing with the QuizID you have entered',category='error')
-                return render_template("quizMenu.html",user=current_user, code=code)
-
+            try:
+                if rooms[room].get("QuizID") == quizID:
+                    #Checks rooms dictionary to see if there is a quiz room currently ongoing
+                    flash('There is already a quiz ongoing with the QuizID you have entered',category='error')
+                    return render_template("quizMenu.html",user=current_user, code=code)
+            except:
+                create = True
             if create != False:
                 Users = [UserID]
                 room = generate_unique_code(4)
+                #Random quizroom code is generated
                 rooms[room] = {"members": 0, "messages": [],"QuizID":quizID,"Users":Users}
             elif code not in rooms:
+                #Rooms dictionary is checked to see if quiz with code entered exists
                 flash("Quiz room with code dosen't exist",category='error')
                 return render_template("quizMenu.html",user=current_user, code=code)
-            
-
-
-
+       
             if room in rooms:
                 quizID = rooms[room].get("QuizID")
                 currentUsers = rooms[room].get("Users")
                 if UserID not in currentUsers:
                     currentUsers.append(UserID)
                 rooms[room].update({"Users":currentUsers})
+                #rooms dictionary is updated with the new user
         
             session["room"] = room
             session["name"] = name
-            UserScores[UserID] = 0
-
+            userScores[UserID] = 0
+            #Quiz room and the code are stored in sessions
             
-            return redirect(url_for("QuizSection.room",QuizID=quizID))
+            return redirect(url_for("quizSection.room",QuizID=quizID))
     
     return render_template("quizMenu.html",user=current_user)
 
 
-@QuizSection.route("/room/<QuizID>",  methods=['GET','POST'])
+
+@quizSection.route("/room/<QuizID>",  methods=['GET','POST'])
 @login_required
 def room(QuizID):
     room = session.get("room")
+    #session is checked to see if the quiz room exists
     if room is None or session.get("name") is None or room not in rooms:
-        return redirect(url_for("QuizSection.quizMenu"))
-    return render_template("room.html",user=current_user, code=room, messages=rooms[room]["messages"],QuizID=QuizID)
+        return redirect(url_for("quizSection.quizMenu"))
+        #If quiz room does not exist then user is redirected to the quiz menu
+    return render_template("quizRoom.html",user=current_user, code=room, messages=rooms[room]["messages"],QuizID=QuizID)
+    #If quiz room matchs quiz in session then they are allowed to join the quiz room
 
 
 
-@QuizSection.route("/viewPastQuizzes",  methods=['GET','POST'])
+@quizSection.route("/viewPastQuizzes",  methods=['GET','POST'])
 @login_required
 def viewPastQuizzes():
     if request.method == 'POST':
         if request.form.get("action1") == 'View PastQuizzes':
-            return redirect(url_for('QuizSection.DisplayPastQuizzes'))
+            #If the user presses the button to view past quizzes
+            return redirect(url_for('quizSection.DisplayPastQuizzes'))
         if request.form.get("action2") == 'Retake Quiz':
-            return redirect(url_for('QuizSection.chooseQuizID'))
-
-
+            #If the user presses the button to retak quiz
+            return redirect(url_for('quizSection.chooseQuizID'))
     return render_template('viewPastQuizzes.html',user=current_user)
 
-@QuizSection.route("/DisplayPastQuizzes",  methods=['GET','POST'])
+
+
+@quizSection.route("/DisplayPastQuizzes",  methods=['GET','POST'])
 @login_required
 def DisplayPastQuizzes():
 
@@ -127,78 +134,89 @@ def DisplayPastQuizzes():
                         FROM PastQuiz,Quiz 
                         WHERE Quiz.QuizID = PastQuiz.QuizID
                         AND UserID=?""",(UserID,))
-    data = cursor.fetchall()
     
+    data = cursor.fetchall()
+    #All the data from the quizzes completed by the user is queried
     data = list(dict.fromkeys(data))
-
-    return render_template('DisplayPastQuizzes.html',user=current_user,data=data)
-
-
-
+    #Duplicates are removed
+    return render_template('displayPastQuizzes.html',user=current_user,data=data)
+    #The quizzes are displayed to the user through the HTML page
 
 
-@QuizSection.route("/chooseQuizID",  methods=['GET','POST'])
+
+@quizSection.route("/chooseQuizID",  methods=['GET','POST'])
 @login_required
 def chooseQuizID():
     UserID = current_user.get_id()
     if request.method == 'POST':
+
         QuizID = request.form.get("QuizID")
+        #Form data recieved
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
         cursor.execute("SELECT * FROM PastQuiz WHERE QuizID=? AND UserID=?",(QuizID,UserID))
         results = cursor.fetchall()
+        #Query checks if the userID has access to the quiz entered
         if len(results) == 0:
+            #If query is empty
             flash('You do not have a quiz with the specified ID',category='error')
             return render_template('chooseQuizID.html',user=current_user)
         else:
-            return redirect(url_for('QuizSection.TakeQuizSinglePlayer',QuizID=QuizID))
-
-        #check if user has access to this quiz and check if quiz exists
-
+            #If user does have access to the quiz
+            return redirect(url_for('quizSection.retakeQuiz',QuizID=QuizID))
     return render_template('chooseQuizID.html',user=current_user)
 
 
 
-
-@QuizSection.route('/Scoreboard',  methods=['GET', 'POST'])
+@quizSection.route('/Scoreboard',  methods=['GET', 'POST'])
 @login_required
 def multiplayScoreboarderQuiz():
     room = session.get("room")
     if room!=None:
+        #If quiz room exists
         currentUsers = rooms[room].get("Users")
-        UserNamesAndScores=[]
+        userNamesAndScores=[]
+
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
-        for x in currentUsers:
-            cursor.execute("SELECT Firstname FROM User WHERE UserID=?",(x,))
-            UserName = cursor.fetchall()
-            UserScore = UserScores[x]
-            UserNamesAndScores.append((UserName[0][0],UserScore))
+
+        for user in currentUsers:
+
+            cursor.execute("SELECT Firstname FROM User WHERE UserID=?",(user,))
+            userName = cursor.fetchall()
+            #Query gets the user's name
+            userScore = userScores[user]
+            #Dictionary is checked for user's score
+            userNamesAndScores.append((userName[0][0],userScore))
+
         connection.close()
+        #The names and scores of the users in the quiz room are returned
 
-        return render_template("ScoreBoard.html",UserNamesAndScores=UserNamesAndScores)
+        return render_template("ScoreBoard.html",userNamesAndScores=userNamesAndScores)
     return 
-#clear user scores after quiz is complete
 
 
-@QuizSection.route('/TakeQuizSinglePlayer/<QuizID>',  methods=['GET', 'POST'])
+
+@quizSection.route('/retakeQuiz/<QuizID>',  methods=['GET', 'POST'])
 @login_required
-def TakeQuizSinglePlayer(QuizID):
-
-
+def retakeQuiz(QuizID):
     UserID=current_user.get_id()
-
     QuizID = int(QuizID)
-    QuestionIds = []
+    questionIDs = []
 
     connection = sqlite3.connect("database.db",check_same_thread=False)
     cursor = connection.cursor()
+
     cursor.execute("SELECT QuestionID FROM QuizQuestions WHERE QuizID=?",(str(QuizID),))
-    QuestionIdsFromQuiz = cursor.fetchall()
-    for x in QuestionIdsFromQuiz:
-        QuestionIds.append(x[0])
+    questionIDsFromQuiz = cursor.fetchall()
+    #The question ids associated with the quiz are queried
+
+    for questionID in questionIDsFromQuiz:
+        questionIDs.append(questionID[0])
+
     connection.close()
+
     if request.method == 'GET':
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
@@ -206,1136 +224,1060 @@ def TakeQuizSinglePlayer(QuizID):
         connection.commit()
         connection.close()
 
+        quizExists = False
+        for singlePlayerQuizQuestion in allQuizQuestionsSingleplayers:
+            if singlePlayerQuizQuestion[0][1][0] in questionIDs and UserID == singlePlayerQuizQuestion[0][0]:
+                quizQuestions = singlePlayerQuizQuestion
+                quizExists = True
+        #If the user has an incomplete quiz that they are already retaking then the quiz is returned
 
-        QuizExists = False
-        for x in AllQuizQuestions:
-            if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                
-                QuizQuestions = x
-                QuizExists = True
 
-        if QuizExists == True:
+        if quizExists == True:
             
-            Question = QuizQuestions[0][1]
-            Question = list(Question)
-            QuestionIDOfQuestion = Question[0]
-            QuestionType=Question[1]
-
+            question = quizQuestions[0][1]
+            question = list(question)
+            questionIDOfQuestion = question[0]
+            questionType=question[1]
+            #when questions are stored in the database they are turned into strings before storing
+            #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
             try:
-                Questions=eval(Question[2])
+                questions=eval(question[2])
             except:
-                Questions=Question[2]
-
+                questions=question[2]
             try:
-                Answers=eval(Question[3])
+                answers=eval(question[3])
             except:
-                Answers=Question[3]
-
+                answers=question[3]
             try:
-                CorrectAnswer=eval(Question[4])
+                correctAnswer=eval(question[4])
             except:
-                CorrectAnswer=Question[4]
+                correctAnswer=question[4]
         else:
-
+            #If the user does not have an ongoing quiz retake
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
+
             cursor.execute("SELECT QuestionID FROM QuizQuestions WHERE QuizID=?",(str(QuizID),))
-            QuestionIdsFromQuiz = cursor.fetchall()
+            questionIDsFromQuiz = cursor.fetchall()
 
-            QuizQuestions = []        
+            quizQuestions = []        
 
-            for x in QuestionIdsFromQuiz:
-                cursor.execute("SELECT QuestionID,QuestionType,Question,Answer,CorrectAnswer FROM Question WHERE QuestionID=?",(x[0],))
-                QuizQuestions.append((UserID,cursor.fetchall()[0]))
+            for questionID in questionIDsFromQuiz:
+                cursor.execute("SELECT QuestionID,QuestionType,Question,Answer,CorrectAnswer FROM Question WHERE QuestionID=?",(questionID[0],))
+                quizQuestions.append((UserID,cursor.fetchall()[0]))
             connection.close()
-            AllQuizQuestions.append(QuizQuestions)
-            Question = QuizQuestions[0][1]
-            Question = list(Question)
-            QuestionIDOfQuestion = Question[0]
-            QuestionType=Question[1]
+            #The questions and answers for the quiz are queried
 
+            allQuizQuestionsSingleplayers.append(quizQuestions)
+            question = quizQuestions[0][1]
+            question = list(question)
+            questionIDOfQuestion = question[0]
+            questionType=question[1]
+            #when questions are stored in the database they are turned into strings before storing
+            #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
             try:
-                Questions=eval(Question[2])
+                questions=eval(question[2])
             except:
-                Questions=Question[2]
-
+                questions=question[2]
             try:
-                Answers=eval(Question[3])
+                answers=eval(question[3])
             except:
-                Answers=Question[3]
-
+                answers=question[3]
             try:
-                CorrectAnswer=eval(Question[4])
+                correctAnswer=eval(question[4])
             except:
-                CorrectAnswer=Question[4]
+                correctAnswer=question[4]
                 
     if request.method == 'POST':
-        QuizQuestions=[]
+        quizQuestions=[]
 
-        for x in AllQuizQuestions:
-            if len(x)!=0:#if quiz hasnt been completed
-                if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                    
-                    QuizQuestions = x
+        for singlePlayerQuizQuestion in allQuizQuestionsSingleplayers:
+            if len(singlePlayerQuizQuestion)!=0:    #if quiz hasnt been completed
+                if singlePlayerQuizQuestion[0][1][0] in questionIDs and UserID == singlePlayerQuizQuestion[0][0]:
+                    #If the quiz question is for the current user then it is retrieved
+                    quizQuestions = singlePlayerQuizQuestion
             else:
-                QuizQuestions = x
+                quizQuestions = singlePlayerQuizQuestion
 
-        if len(QuizQuestions) == 0:
-            return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
+        if len(quizQuestions) == 0:
+            #If quiz has been completed
+            return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
             
-
-
-
-        Question = QuizQuestions[0][1]
-        Question = list(Question)
-        QuestionIDOfQuestion = Question[0]
-        QuestionType=Question[1]
-
+        question = quizQuestions[0][1]
+        question = list(question)
+        questionIDOfQuestion = question[0]
+        questionType=question[1]
+        #when questions are stored in the database they are turned into strings before storing
+        #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
         try:
-            Questions=eval(Question[2])
+            questions=eval(question[2])
         except:
-            Questions=Question[2]
-
+            questions=question[2]
         try:
-            Answers=eval(Question[3])
+            answers=eval(question[3])
         except:
-            Answers=Question[3]
-
+            answers=question[3]
         try:
-            CorrectAnswer=eval(Question[4])
+            correctAnswer=eval(question[4])
         except:
-            CorrectAnswer=Question[4]
+            correctAnswer=question[4]
         
         if request.form.get('NextQuestion') == 'Next Question':
-
-            for x in AllQuizQuestions:
-                if len(x)!=0:
-                    if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                        AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                        
-                        QuizQuestions = x
+            #If user presses button to move to next question
+            for singlePlayerQuizQuestion in allQuizQuestionsSingleplayers:
+                if len(singlePlayerQuizQuestion)!=0:    #If quiz hasn't been completed
+                    if singlePlayerQuizQuestion[0][1][0] in questionIDs and UserID == singlePlayerQuizQuestion[0][0]:
+                        allQuizQuestionsSingleplayers[allQuizQuestionsSingleplayers.index(singlePlayerQuizQuestion)].pop(0)
+                        #The completed question is removed from the quiz
+                        quizQuestions = singlePlayerQuizQuestion
                 else:
-                    QuizQuestions = x
+                    quizQuestions = singlePlayerQuizQuestion
 
+            if len(quizQuestions) == 0:
+                #If quiz has been completed
+                return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
 
-            if len(QuizQuestions) == 0:
-                return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
-
-                
-            Question = QuizQuestions[0][1]
-            Question = list(Question)
-            QuestionIDOfQuestion = Question[0]
-            QuestionType=Question[1]
-
+            question = quizQuestions[0][1]
+            question = list(question)
+            questionIDOfQuestion = question[0]
+            questionType=question[1]
+            #when questions are stored in the database they are turned into strings before storing
+            #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
             try:
-                Questions=eval(Question[2])
+                questions=eval(question[2])
             except:
-                Questions=Question[2]
-
+                questions=question[2]
             try:
-                Answers=eval(Question[3])
+                answers=eval(question[3])
             except:
-                Answers=Question[3]
-
+                answers=question[3]
             try:
-                CorrectAnswer=eval(Question[4])
+                correctAnswer=eval(question[4])
             except:
-                CorrectAnswer=Question[4]
+                correctAnswer=question[4]
 
+            if questionType == 'MC':
+                random.shuffle(answers)
+            if questionType == 'QA':
+                #The answers and questions are matched and assigned the same id
+                #Therefore when validating if they have matching ids they are valid
+                questionsAndIDs = []
+                answersAndIDs = []
 
+                for x in range(len(questions)):
+                    questionID = x
+                    question = questions[x]
+                    questionsAndIDs.append((questionID,question))
 
-            if QuestionType == 'MC':
-                random.shuffle(Answers)
-            if QuestionType == 'QA':
-
-                QuestionsAndIds = []
-                AnswersAndIds = []
-
-                for x in range(len(Questions)):
-                    QuestionID = x
-                    Question = Questions[x]
-                    QuestionsAndIds.append((QuestionID,Question))
-
-                for x in QuestionsAndIds:
-                    for key,value in CorrectAnswer.items():
+                for x in questionsAndIDs:
+                    for key,value in correctAnswer.items():
                         if x[1] == key:
-                            AnswersAndIds.append((x[0],value))
+                            answersAndIDs.append((x[0],value))
 
-                random.shuffle(AnswersAndIds)
+                random.shuffle(answersAndIDs)
 
-                Questions = QuestionsAndIds
-                Answers = AnswersAndIds
+                questions = questionsAndIDs
+                answers = answersAndIDs
 
-            return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)
+            return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
 
-        if QuestionType == 'MC':
+        if questionType == 'MC':
             multipleChoiceAnswer = request.form.get('answer')
+            #Answer recieved from the form
         
-            if multipleChoiceAnswer == CorrectAnswer:
-
-
-
+            if multipleChoiceAnswer == correctAnswer:
+                #If the answer is correct
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
 
-                cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                QuestionInfo = cursor.fetchall()
+                cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                questionInfo = cursor.fetchall()
 
-
-                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,QuestionIDOfQuestion,))
+                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,questionIDOfQuestion,))
                 connection.commit()
 
                 cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(QuizID,))
-                QuizInfo = cursor.fetchall()
+                quizInfo = cursor.fetchall()
 
-                cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,QuizID,))
+                cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,QuizID,))
                 connection.commit()
 
                 connection.close()
-
-
+                #Database is updated with their new score
                 flash('Correct',category='success')
 
-
-                for x in AllQuizQuestions:
-                    if len(x)!=0:
-                        if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                            AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                            
-                            QuizQuestions = x
+                for singlePlayerQuizQuestion in allQuizQuestionsSingleplayers:
+                    if len(singlePlayerQuizQuestion)!=0:    #If quiz hasn't been completed
+                        if singlePlayerQuizQuestion[0][1][0] in questionIDs and UserID == singlePlayerQuizQuestion[0][0]:
+                            allQuizQuestionsSingleplayers[allQuizQuestionsSingleplayers.index(singlePlayerQuizQuestion)].pop(0)
+                            #The completed quiz is removed from the quiz
+                            quizQuestions = singlePlayerQuizQuestion
                     else:
-                        QuizQuestions = x
+                        quizQuestions = singlePlayerQuizQuestion
                         
-                if len(QuizQuestions) == 0:
-                    return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))#clear scores    
+                if len(quizQuestions) == 0:
+                    #If quiz has finished
+                    return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
                     
-                Question = QuizQuestions[0][1]
-                Question = list(Question)
-                QuestionIDOfQuestion = Question[0]
-                QuestionType=Question[1]
-
+                question = quizQuestions[0][1]
+                question = list(question)
+                questionIDOfQuestion = question[0]
+                questionType=question[1]
+                #when questions are stored in the database they are turned into strings before storing
+                #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                 try:
-                    Questions=eval(Question[2])
+                    questions=eval(question[2])
                 except:
-                    Questions=Question[2]
-
+                    questions=question[2]
                 try:
-                    Answers=eval(Question[3])
+                    answers=eval(question[3])
                 except:
-                    Answers=Question[3]
-
+                    answers=question[3]
                 try:
-                    CorrectAnswer=eval(Question[4])
+                    correctAnswer=eval(question[4])
                 except:
-                    CorrectAnswer=Question[4]
+                    correctAnswer=question[4]
 
+                if questionType == 'MC':
+                    random.shuffle(answers)
+                if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
+                    questionsAndIDs = []
+                    answersAndIDs = []
 
-                if QuestionType == 'MC':
-                    random.shuffle(Answers)
-                if QuestionType == 'QA':
+                    for x in range(len(questions)):
+                        questionID = x
+                        question = questions[x]
+                        questionsAndIDs.append((questionID,question))
 
-                    QuestionsAndIds = []
-                    AnswersAndIds = []
-
-                    for x in range(len(Questions)):
-                        QuestionID = x
-                        Question = Questions[x]
-                        QuestionsAndIds.append((QuestionID,Question))
-
-                    for x in QuestionsAndIds:
-                        for key,value in CorrectAnswer.items():
+                    for x in questionsAndIDs:
+                        for key,value in correctAnswer.items():
                             if x[1] == key:
-                                AnswersAndIds.append((x[0],value))
+                                answersAndIDs.append((x[0],value))
 
-                    random.shuffle(AnswersAndIds)
+                    random.shuffle(answersAndIDs)
+                    questions = questionsAndIDs
+                    answers = answersAndIDs
 
-                    Questions = QuestionsAndIds
-                    Answers = AnswersAndIds
-
-
-                return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)
+                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
             else:
                 flash('Inorrect',category='error')
 
-
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
 
-                cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                QuestionInfo = cursor.fetchall()
-                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,QuestionIDOfQuestion,))
+                cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                questionInfo = cursor.fetchall()
+                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,questionIDOfQuestion,))
                 connection.commit()
                 connection.close()
+                #Database is updated with the user's score
+                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
-
-                return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
-
-
-        if QuestionType == 'FB':
-            Answer = request.form.get('Answer')
-            if Answer!=None:
-                if Answer.lower() == CorrectAnswer:
+        if questionType == 'FB':
+            answer = request.form.get('answer')
+            #Answer recieved from form
+            if answer!=None:
+                if answer.lower() == correctAnswer:
                     flash('correct',category='success')
                     
-
-
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                    QuestionInfo = cursor.fetchall()
+                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                    questionInfo = cursor.fetchall()
 
-
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,QuestionIDOfQuestion,))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,questionIDOfQuestion,))
                     connection.commit()
 
                     cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(QuizID,))
-                    QuizInfo = cursor.fetchall()
+                    quizInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,QuizID,))
+                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,QuizID,))
                     connection.commit()
 
                     connection.close()
+                    #Database is updated with new score
 
-
-                    for x in AllQuizQuestions:
-                        if len(x)!=0:
-                            if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                                AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                                
-                                QuizQuestions = x
+                    for singlePlayerQuizQuestion in allQuizQuestionsSingleplayers:
+                        if len(singlePlayerQuizQuestion)!=0:    #If quiz hasn't been completed
+                            if singlePlayerQuizQuestion[0][1][0] in questionIDs and UserID == singlePlayerQuizQuestion[0][0]:
+                                allQuizQuestionsSingleplayers[allQuizQuestionsSingleplayers.index(singlePlayerQuizQuestion)].pop(0)
+                                #The completed question is removed from the quiz
+                                quizQuestions = singlePlayerQuizQuestion
                         else:
-                            QuizQuestions = x
-                    if len(QuizQuestions) == 0:
-                        return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))          
-
+                            quizQuestions = singlePlayerQuizQuestion
+                    if len(quizQuestions) == 0:
+                        #If quiz has been completed
+                        return redirect(url_for("quizSection.viewResults",QuizID=QuizID))          
                         
-                    Question = QuizQuestions[0][1]
-                    Question = list(Question)
-                    QuestionIDOfQuestion = Question[0]
-                    QuestionType=Question[1]
-
+                    question = quizQuestions[0][1]
+                    question = list(question)
+                    questionIDOfQuestion = question[0]
+                    questionType=question[1]
+                    #when questions are stored in the database they are turned into strings before storing
+                    #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                     try:
-                        Questions=eval(Question[2])
+                        questions=eval(question[2])
                     except:
-                        Questions=Question[2]
-
+                        questions=question[2]
                     try:
-                        Answers=eval(Question[3])
+                        answers=eval(question[3])
                     except:
-                        Answers=Question[3]
-
+                        answers=question[3]
                     try:
-                        CorrectAnswer=eval(Question[4])
+                        correctAnswer=eval(question[4])
                     except:
-                        CorrectAnswer=Question[4]
+                        correctAnswer=question[4]
 
-                    if QuestionType == 'MC':
-                        random.shuffle(Answers)
-                    if QuestionType == 'QA':
+                    if questionType == 'MC':
+                        random.shuffle(answers)
+                    if questionType == 'QA':
+                        #The answers and questions are matched and assigned the same id
+                        #Therefore when validating if they have matching ids they are valid
+                        questionsAndIDs = []
+                        answersAndIDs = []
 
-                        QuestionsAndIds = []
-                        AnswersAndIds = []
+                        for x in range(len(questions)):
+                            questionID = x
+                            question = questions[x]
+                            questionsAndIDs.append((questionID,question))
 
-                        for x in range(len(Questions)):
-                            QuestionID = x
-                            Question = Questions[x]
-                            QuestionsAndIds.append((QuestionID,Question))
-
-                        for x in QuestionsAndIds:
-                            for key,value in CorrectAnswer.items():
+                        for x in questionsAndIDs:
+                            for key,value in correctAnswer.items():
                                 if x[1] == key:
-                                    AnswersAndIds.append((x[0],value))
+                                    answersAndIDs.append((x[0],value))
 
-                        random.shuffle(AnswersAndIds)
+                        random.shuffle(answersAndIDs)
 
-                        Questions = QuestionsAndIds
-                        Answers = AnswersAndIds
+                        questions = questionsAndIDs
+                        answers = answersAndIDs
 
-                    return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)
+                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
                 else:
                     flash('Inorrect',category='error')
 
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                    QuestionInfo = cursor.fetchall()
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,QuestionIDOfQuestion,))
+                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                    questionInfo = cursor.fetchall()
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,questionIDOfQuestion,))
                     connection.commit()
                     connection.close()
+                    #Database is updated with new score
+                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
+        if questionType == 'SM':
 
-                    return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
+            mistakeInAnswer=''
+            correctAnswerToMistake=''
 
-        if QuestionType == 'SM':
+            for x in range(len(answers.split())):
+                if answers.split()[x] != correctAnswer.split()[x]:
+                    mistakeInAnswer = answers.split()[x]
+                    correctAnswerToMistake = correctAnswer.split()[x]
 
-            MistakeInAnswer=''
-            CorrectAnswerToMistake=''
+            answer = request.form.get('incorrectWord')
 
-
-            for x in range(len(Answers.split())):
-                if Answers.split()[x] != CorrectAnswer.split()[x]:
-                    MistakeInAnswer = Answers.split()[x]
-                    CorrectAnswerToMistake = CorrectAnswer.split()[x]
-
-
-
-            Answer = request.form.get('incorrectWord')
-
-            if Answer != None:
-
-                if Answer.lower() == MistakeInAnswer:
-                                
-
+            if answer != None:
+                #If answer si not empty
+                if answer.lower() == mistakeInAnswer:          
+                    #If answer is corred
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                    QuestionInfo = cursor.fetchall()
+                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                    questionInfo = cursor.fetchall()
 
-
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,QuestionIDOfQuestion,))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,questionIDOfQuestion,))
                     connection.commit()
 
                     cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(QuizID,))
-                    QuizInfo = cursor.fetchall()
+                    quizInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,QuizID,))
+                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,QuizID,))
                     connection.commit()
 
                     connection.close()
-
-
+                    #Database is updated with new score
                     flash('Correct',category='success')
 
-
-                    for x in AllQuizQuestions:
-                        if len(x)!=0:
-                            if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                                AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                                
-                                QuizQuestions = x
+                    for singlePlayerQuizQuestion in allQuizQuestionsSingleplayers:
+                        if len(singlePlayerQuizQuestion)!=0:    #If quiz hasn't been completed
+                            if singlePlayerQuizQuestion[0][1][0] in questionIDs and UserID == singlePlayerQuizQuestion[0][0]:
+                                allQuizQuestionsSingleplayers[allQuizQuestionsSingleplayers.index(singlePlayerQuizQuestion)].pop(0)
+                                #The completed question is removed from the quiz
+                                quizQuestions = singlePlayerQuizQuestion
                         else:
-                            QuizQuestions = x
+                            quizQuestions = singlePlayerQuizQuestion
 
-                    if len(QuizQuestions) == 0:
-                        return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
+                    if len(quizQuestions) == 0:
+                        #If quiz has been completed
+                        return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
 
-
-                        
-                    Question = QuizQuestions[0][1]
-                    Question = list(Question)
-                    QuestionIDOfQuestion = Question[0]
-                    QuestionType=Question[1]
-
+                    question = quizQuestions[0][1]
+                    question = list(question)
+                    questionIDOfQuestion = question[0]
+                    questionType=question[1]
+                    #when questions are stored in the database they are turned into strings before storing
+                    #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                     try:
-                        Questions=eval(Question[2])
+                        questions=eval(question[2])
                     except:
-                        Questions=Question[2]
-
+                        questions=question[2]
                     try:
-                        Answers=eval(Question[3])
+                        answers=eval(question[3])
                     except:
-                        Answers=Question[3]
-
+                        answers=question[3]
                     try:
-                        CorrectAnswer=eval(Question[4])
+                        correctAnswer=eval(question[4])
                     except:
-                        CorrectAnswer=Question[4]
+                        correctAnswer=question[4]
 
-                    if QuestionType == 'MC':
-                        random.shuffle(Answers)
-                    if QuestionType == 'QA':
+                    if questionType == 'MC':
+                        random.shuffle(answers)
+                    if questionType == 'QA':
+                        #The answers and questions are matched and assigned the same id
+                        #Therefore when validating if they have matching ids they are valid
 
-                        QuestionsAndIds = []
-                        AnswersAndIds = []
+                        questionsAndIDs = []
+                        answersAndIDs = []
 
-                        for x in range(len(Questions)):
-                            QuestionID = x
-                            Question = Questions[x]
-                            QuestionsAndIds.append((QuestionID,Question))
+                        for x in range(len(questions)):
+                            questionID = x
+                            question = questions[x]
+                            questionsAndIDs.append((questionID,question))
 
-                        for x in QuestionsAndIds:
-                            for key,value in CorrectAnswer.items():
+                        for x in questionsAndIDs:
+                            for key,value in correctAnswer.items():
                                 if x[1] == key:
-                                    AnswersAndIds.append((x[0],value))
+                                    answersAndIDs.append((x[0],value))
 
-                        random.shuffle(AnswersAndIds)
+                        random.shuffle(answersAndIDs)
 
-                        Questions = QuestionsAndIds
-                        Answers = AnswersAndIds
+                        questions = questionsAndIDs
+                        answers = answersAndIDs
 
-                    return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)
+                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
                 else:
                     flash('Inorrect',category='error')
-
-
-
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                    QuestionInfo = cursor.fetchall()
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,QuestionIDOfQuestion,))
+                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                    questionInfo = cursor.fetchall()
+
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,questionIDOfQuestion,))
                     connection.commit()
                     connection.close()
+                    #Database is updated with new score
 
+                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
-
-                    return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswerToMistake,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
-
-
-#answer as question and correct mistake as answer
-
-
-        if QuestionType == 'QA':
+        if questionType == 'QA':
 
             if request.form.get('Box0') == '0' and request.form.get('Box1') == '1' and request.form.get('Box2') == '2':      
                 flash('Correct',category='success')
+                #If answer is correct
 
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
 
-                cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                QuestionInfo = cursor.fetchall()
+                cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                questionInfo = cursor.fetchall()
 
-
-                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,QuestionIDOfQuestion,))
+                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,questionIDOfQuestion,))
                 connection.commit()
 
                 cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(QuizID,))
-                QuizInfo = cursor.fetchall()
+                quizInfo = cursor.fetchall()
 
-                cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,QuizID,))
+                cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,QuizID,))
                 connection.commit()
 
                 connection.close()
+                #Database is updated with new score
 
-                for x in AllQuizQuestions:
-                    if len(x)!=0:
-                        if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                            AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                            
-                            QuizQuestions = x
+                for singlePlayerQuizQuestion in allQuizQuestionsSingleplayers:
+                    if len(singlePlayerQuizQuestion)!=0:    #If quiz hasn't been completed
+                        if singlePlayerQuizQuestion[0][1][0] in questionIDs and UserID == singlePlayerQuizQuestion[0][0]:
+                            allQuizQuestionsSingleplayers[allQuizQuestionsSingleplayers.index(singlePlayerQuizQuestion)].pop(0)
+                            #The completed question is removed from the quiz
+                            quizQuestions = singlePlayerQuizQuestion
                     else:
-                        QuizQuestions = x
+                        quizQuestions = singlePlayerQuizQuestion
 
-                if len(QuizQuestions) == 0:
-                    return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))                  
+                if len(quizQuestions) == 0:
+                    #If quiz has been completed
+                    return redirect(url_for("quizSection.viewResults",QuizID=QuizID))                  
                     
-                Question = QuizQuestions[0][1]
-                Question = list(Question)
-                QuestionIDOfQuestion = Question[0]
-                QuestionType=Question[1]
-
+                question = quizQuestions[0][1]
+                question = list(question)
+                questionIDOfQuestion = question[0]
+                questionType=question[1]
+                #when questions are stored in the database they are turned into strings before storing
+                #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                 try:
-                    Questions=eval(Question[2])
+                    questions=eval(question[2])
                 except:
-                    Questions=Question[2]
-
+                    questions=question[2]
                 try:
-                    Answers=eval(Question[3])
+                    answers=eval(question[3])
                 except:
-                    Answers=Question[3]
-
+                    answers=question[3]
                 try:
-                    CorrectAnswer=eval(Question[4])
+                    correctAnswer=eval(question[4])
                 except:
-                    CorrectAnswer=Question[4]
+                    correctAnswer=question[4]
 
-                if QuestionType == 'MC':
-                    random.shuffle(Answers)
-                if QuestionType == 'QA':
+                if questionType == 'MC':
+                    random.shuffle(answers)
+                if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
+                    questionsAndIDs = []
+                    answersAndIDs = []
 
-                    QuestionsAndIds = []
-                    AnswersAndIds = []
+                    for x in range(len(questions)):
+                        questionID = x
+                        question = questions[x]
+                        questionsAndIDs.append((questionID,question))
 
-                    for x in range(len(Questions)):
-                        QuestionID = x
-                        Question = Questions[x]
-                        QuestionsAndIds.append((QuestionID,Question))
-
-                    for x in QuestionsAndIds:
-                        for key,value in CorrectAnswer.items():
+                    for x in questionsAndIDs:
+                        for key,value in correctAnswer.items():
                             if x[1] == key:
-                                AnswersAndIds.append((x[0],value))
+                                answersAndIDs.append((x[0],value))
 
-                    random.shuffle(AnswersAndIds)
+                    random.shuffle(answersAndIDs)
 
-                    Questions = QuestionsAndIds
-                    Answers = AnswersAndIds
+                    questions = questionsAndIDs
+                    answers = answersAndIDs
 
-                return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)
-
+                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
             
             else:
                 flash("incorrect",category='error')
 
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
-
-
-                cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(QuestionIDOfQuestion,))
-                QuestionInfo = cursor.fetchall()
-                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,QuestionIDOfQuestion,))
+                cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(questionIDOfQuestion,))
+                questionInfo = cursor.fetchall()
+                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,questionIDOfQuestion,))
                 connection.commit()
                 connection.close()
+                #Database is updated with new score
 
+                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
-                return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
-
-    return render_template("SinglePlayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID,user=current_user)
-
-
-
+    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
 
 
 
-@QuizSection.route('/multiplayerQuiz/<QuizID>',  methods=['GET', 'POST'])
+@quizSection.route('/multiplayerQuiz/<QuizID>',  methods=['GET', 'POST'])
 @login_required
 def multiplayerQuiz(QuizID):
-
     UserID=current_user.get_id()
 
-
     QuizID = int(QuizID)
-    QuestionIds = []
+    questionIDs = []
 
     connection = sqlite3.connect("database.db",check_same_thread=False)
     cursor = connection.cursor()
+
     cursor.execute("SELECT QuestionID FROM QuizQuestions WHERE QuizID=?",(str(QuizID),))
-    QuestionIdsFromQuiz = cursor.fetchall()
-    for x in QuestionIdsFromQuiz:
-        QuestionIds.append(x[0])
+
+    questionIDsFromQuiz = cursor.fetchall()
+    #The question ids associated with the quiz are queried
+    for x in questionIDsFromQuiz:
+        questionIDs.append(x[0])
     connection.close()
     if request.method == 'GET':
-        QuizExists = False
-        for x in AllQuizQuestions:
-            if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                
-                QuizQuestions = x
-                QuizExists = True
+        quizExists = False
+        for multiPlayerQuizQuestion in allQuizQuestionsMultiplayer:
+            if multiPlayerQuizQuestion[0][1][0] in questionIDs and UserID == multiPlayerQuizQuestion[0][0]:
+                #looks for multiplayer quiz associated with current user
+                quizQuestions = multiPlayerQuizQuestion
+                quizExists = True
+                #If user has an incomplete quiz that they are already taking then the quiz is returned
 
-        if QuizExists == True:
-            
-            Question = QuizQuestions[0][1]
-            Question = list(Question)
-            QuestionType=Question[1]
-
+        if quizExists == True:
+            question = quizQuestions[0][1]
+            question = list(question)
+            questionType=question[1]
+            #when questions are stored in the database they are turned into strings before storing
+            #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
             try:
-                Questions=eval(Question[2])
+                questions=eval(question[2])
             except:
-                Questions=Question[2]
-
+                questions=question[2]
             try:
-                Answers=eval(Question[3])
+                answers=eval(question[3])
             except:
-                Answers=Question[3]
-
+                answers=question[3]
             try:
-                CorrectAnswer=eval(Question[4])
+                correctAnswer=eval(question[4])
             except:
-                CorrectAnswer=Question[4]
+                correctAnswer=question[4]
         else:
 
             connection = sqlite3.connect("database.db",check_same_thread=False)
             cursor = connection.cursor()
             cursor.execute("SELECT QuestionID FROM QuizQuestions WHERE QuizID=?",(str(QuizID),))
-            QuestionIdsFromQuiz = cursor.fetchall()
+            questionIDsFromQuiz = cursor.fetchall()
+            #Questions are queried
 
-            QuizQuestions = []        
+            quizQuestions = []        
 
-            for x in QuestionIdsFromQuiz:
+            for x in questionIDsFromQuiz:
                 cursor.execute("SELECT QuestionID,QuestionType,Question,Answer,CorrectAnswer FROM Question WHERE QuestionID=?",(x[0],))
-                QuizQuestions.append((UserID,cursor.fetchall()[0]))
+                quizQuestions.append((UserID,cursor.fetchall()[0]))
+            #Questions are queried for each question in the quiz
             connection.close()
-            AllQuizQuestions.append(QuizQuestions)
-            Question = QuizQuestions[0][1]
-            Question = list(Question)
-
-            QuestionType=Question[1]
-
+            allQuizQuestionsMultiplayer.append(quizQuestions)
+            question = quizQuestions[0][1]
+            question = list(question)
+            questionType=question[1]
+            #when questions are stored in the database they are turned into strings before storing
+            #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
             try:
-                Questions=eval(Question[2])
+                questions=eval(question[2])
             except:
-                Questions=Question[2]
-
+                questions=question[2]
             try:
-                Answers=eval(Question[3])
+                answers=eval(question[3])
             except:
-                Answers=Question[3]
-
+                answers=question[3]
             try:
-                CorrectAnswer=eval(Question[4])
+                correctAnswer=eval(question[4])
             except:
-                CorrectAnswer=Question[4]
+                correctAnswer=question[4]
                 
     if request.method == 'POST':
-        QuizQuestions=[]
+        quizQuestions=[]
 
-        for x in AllQuizQuestions:
-            if len(x)!=0:#if quiz hasnt been completed
-                if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                    
-                    QuizQuestions = x
+        for multiPlayerQuizQuestion in allQuizQuestionsMultiplayer:
+            if len(multiPlayerQuizQuestion)!=0:#if quiz hasnt been completed
+                if multiPlayerQuizQuestion[0][1][0] in questionIDs and UserID == multiPlayerQuizQuestion[0][0]:
+                    #looks for multiplayer quiz associated with current user
+                    quizQuestions = multiPlayerQuizQuestion
             else:
-                QuizQuestions = x
+                quizQuestions = multiPlayerQuizQuestion
 
-        if len(QuizQuestions) == 0:
+        if len(quizQuestions) == 0:
+            #If quiz has been completed
             return render_template('quizEnd.html')
 
-
-
-        Question = QuizQuestions[0][1]
-        Question = list(Question)
-        
-        QuestionType=Question[1]
-
+        question = quizQuestions[0][1]
+        question = list(question)
+        questionType=question[1]
+        #when questions are stored in the database they are turned into strings before storing
+        #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
         try:
-            Questions=eval(Question[2])
+            questions=eval(question[2])
         except:
-            Questions=Question[2]
-
+            questions=question[2]
         try:
-            Answers=eval(Question[3])
+            answers=eval(question[3])
         except:
-            Answers=Question[3]
-
+            answers=question[3]
         try:
-            CorrectAnswer=eval(Question[4])
+            correctAnswer=eval(question[4])
         except:
-            CorrectAnswer=Question[4]
+            correctAnswer=question[4]
         
         if request.form.get('DisplayAnswer') == 'True':
 
-            for x in AllQuizQuestions:
-                if len(x)!=0:
-                    if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                        AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                        
-                        QuizQuestions = x
+            for multiPlayerQuizQuestion in allQuizQuestionsMultiplayer:
+                if len(multiPlayerQuizQuestion)!=0:
+                    if multiPlayerQuizQuestion[0][1][0] in questionIDs and UserID == multiPlayerQuizQuestion[0][0]:
+                        #looks for multiplayer quiz associated with current user
+                        allQuizQuestionsMultiplayer[allQuizQuestionsMultiplayer.index(multiPlayerQuizQuestion)].pop(0)
+                        #completed question is removed from array
+                        quizQuestions = multiPlayerQuizQuestion
                 else:
-                    QuizQuestions = x
+                    quizQuestions = multiPlayerQuizQuestion
 
 
-            if len(QuizQuestions) == 0:
-                UserScores.pop(UserID)
+            if len(quizQuestions) == 0:
+                #If quiz has been completed
+                userScores.pop(UserID)
                 return render_template('quizEnd.html')
-
                 
-            Question = QuizQuestions[0][1]
-            Question = list(Question)
-            QuestionType=Question[1]
-
+            question = quizQuestions[0][1]
+            question = list(question)
+            questionType=question[1]
+            #when questions are stored in the database they are turned into strings before storing
+            #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
             try:
-                Questions=eval(Question[2])
+                questions=eval(question[2])
             except:
-                Questions=Question[2]
-
+                questions=question[2]
             try:
-                Answers=eval(Question[3])
+                answers=eval(question[3])
             except:
-                Answers=Question[3]
-
+                answers=question[3]
             try:
-                CorrectAnswer=eval(Question[4])
+                correctAnswer=eval(question[4])
             except:
-                CorrectAnswer=Question[4]
+                correctAnswer=question[4]
 
+            if questionType == 'MC':
+                random.shuffle(answers)
+            if questionType == 'QA':
+                #The answers and questions are matched and assigned the same id
+                #Therefore when validating if they have matching ids they are valid
 
+                questionsAndIDs = []
+                answersAndIDs = []
 
-            if QuestionType == 'MC':
-                random.shuffle(Answers)
-            if QuestionType == 'QA':
+                for x in range(len(questions)):
+                    questionID = x
+                    question = questions[x]
+                    questionsAndIDs.append((questionID,question))
 
-                QuestionsAndIds = []
-                AnswersAndIds = []
-
-                for x in range(len(Questions)):
-                    QuestionID = x
-                    Question = Questions[x]
-                    QuestionsAndIds.append((QuestionID,Question))
-
-                for x in QuestionsAndIds:
-                    for key,value in CorrectAnswer.items():
+                for x in questionsAndIDs:
+                    for key,value in correctAnswer.items():
                         if x[1] == key:
-                            AnswersAndIds.append((x[0],value))
+                            answersAndIDs.append((x[0],value))
 
-                random.shuffle(AnswersAndIds)
+                random.shuffle(answersAndIDs)
 
-                Questions = QuestionsAndIds
-                Answers = AnswersAndIds
+                questions = questionsAndIDs
+                answers = answersAndIDs
 
-            return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID)
+            return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
 
-        if QuestionType == 'MC':
+        if questionType == 'MC': 
             multipleChoiceAnswer = request.form.get('answer')
         
-            if multipleChoiceAnswer == CorrectAnswer:
-
+            if multipleChoiceAnswer == correctAnswer:
+                #If answer is correct
                 flash('Correct',category='success')
-                currentScore = UserScores.get(UserID)
+                currentScore = userScores.get(UserID)
                 if currentScore != None:
                     newScore = currentScore+1
-                    UserScores.update({UserID:newScore})
+                    userScores.update({UserID:newScore})
 
-
-                for x in AllQuizQuestions:
-                    if len(x)!=0:
-                        if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                            AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
+                for multiPlayerQuizQuestion in allQuizQuestionsMultiplayer:
+                    if len(multiPlayerQuizQuestion)!=0:
+                        if multiPlayerQuizQuestion[0][1][0] in questionIDs and UserID == multiPlayerQuizQuestion[0][0]:
+                            #looks for multiplayer quiz associated with current user
+                            allQuizQuestionsMultiplayer[allQuizQuestionsMultiplayer.index(multiPlayerQuizQuestion)].pop(0)
+                            #completed question is removed from array
                             
-                            QuizQuestions = x
+                            quizQuestions = multiPlayerQuizQuestion
                     else:
-                        QuizQuestions = x
+                        quizQuestions = multiPlayerQuizQuestion
                         
-                if len(QuizQuestions) == 0:
-                    UserScores.pop(UserID)
+                if len(quizQuestions) == 0:
+                    #If quiz has been completed
+                    userScores.pop(UserID)
                     return render_template('quizEnd.html')#clear scores    
                     
-                Question = QuizQuestions[0][1]
-                Question = list(Question)
-                QuestionType=Question[1]
-
+                question = quizQuestions[0][1]
+                question = list(question)
+                questionType=question[1]
+                #when questions are stored in the database they are turned into strings before storing
+                #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                 try:
-                    Questions=eval(Question[2])
+                    questions=eval(question[2])
                 except:
-                    Questions=Question[2]
-
+                    questions=question[2]
                 try:
-                    Answers=eval(Question[3])
+                    answers=eval(question[3])
                 except:
-                    Answers=Question[3]
-
+                    answers=question[3]
                 try:
-                    CorrectAnswer=eval(Question[4])
+                    correctAnswer=eval(question[4])
                 except:
-                    CorrectAnswer=Question[4]
+                    correctAnswer=question[4]
 
+                if questionType == 'MC':
+                    random.shuffle(answers)
+                if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
 
-                if QuestionType == 'MC':
-                    random.shuffle(Answers)
-                if QuestionType == 'QA':
+                    questionsAndIDs = []
+                    answersAndIDs = []
+                    for x in range(len(questions)):
+                        questionID = x
+                        question = questions[x]
+                        questionsAndIDs.append((questionID,question))
 
-                    QuestionsAndIds = []
-                    AnswersAndIds = []
-
-                    for x in range(len(Questions)):
-                        QuestionID = x
-                        Question = Questions[x]
-                        QuestionsAndIds.append((QuestionID,Question))
-
-                    for x in QuestionsAndIds:
-                        for key,value in CorrectAnswer.items():
+                    for x in questionsAndIDs:
+                        for key,value in correctAnswer.items():
                             if x[1] == key:
-                                AnswersAndIds.append((x[0],value))
+                                answersAndIDs.append((x[0],value))
 
-                    random.shuffle(AnswersAndIds)
+                    random.shuffle(answersAndIDs)
 
-                    Questions = QuestionsAndIds
-                    Answers = AnswersAndIds
+                    questions = questionsAndIDs
+                    answers = answersAndIDs
 
-
-                return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID)
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
             else:
                 flash('Inorrect',category='error')
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
-                return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
-
-
-        if QuestionType == 'FB':
-            Answer = request.form.get('Answer')
-            if Answer!=None:
-                if Answer.lower() == CorrectAnswer:
+        if questionType == 'FB':
+            answer = request.form.get('answer')
+            if answer!=None:
+                #If answer is not empty
+                if answer.lower() == correctAnswer:
+                    #If answer is correct
                     flash('correct',category='success')
                     
-                    currentScore = UserScores.get(UserID)
+                    currentScore = userScores.get(UserID)
                     if currentScore != None:
                         newScore = currentScore+1
-                        UserScores.update({UserID:newScore})
+                        userScores.update({UserID:newScore})
 
-                    for x in AllQuizQuestions:
-                        if len(x)!=0:
-                            if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                                AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
+                    for multiPlayerQuizQuestion in allQuizQuestionsMultiplayer:
+                        if len(multiPlayerQuizQuestion)!=0:
+                            if multiPlayerQuizQuestion[0][1][0] in questionIDs and UserID == multiPlayerQuizQuestion[0][0]:
+                                #looks for multiplayer quiz associated with current user
+                                allQuizQuestionsMultiplayer[allQuizQuestionsMultiplayer.index(multiPlayerQuizQuestion)].pop(0)
+                                #completed question is removed from array
                                 
-                                QuizQuestions = x
+                                quizQuestions = multiPlayerQuizQuestion
                         else:
-                            QuizQuestions = x
-                    if len(QuizQuestions) == 0:
-                        UserScores.pop(UserID)
+                            quizQuestions = multiPlayerQuizQuestion
+                    if len(quizQuestions) == 0:
+                        #If quiz has been completed
+                        userScores.pop(UserID)
                         return render_template('quizEnd.html')          
-
-                        
-                    Question = QuizQuestions[0][1]
-                    Question = list(Question)
-                    QuestionType=Question[1]
-
+ 
+                    question = quizQuestions[0][1]
+                    question = list(question)
+                    questionType=question[1]
+                    #when questions are stored in the database they are turned into strings before storing
+                    #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                     try:
-                        Questions=eval(Question[2])
+                        questions=eval(question[2])
                     except:
-                        Questions=Question[2]
-
+                        questions=question[2]
                     try:
-                        Answers=eval(Question[3])
+                        answers=eval(question[3])
                     except:
-                        Answers=Question[3]
-
+                        answers=question[3]
                     try:
-                        CorrectAnswer=eval(Question[4])
+                        correctAnswer=eval(question[4])
                     except:
-                        CorrectAnswer=Question[4]
+                        correctAnswer=question[4]
+                    if questionType == 'MC':
+                        random.shuffle(answers)
+                    if questionType == 'QA':
+                        #The answers and questions are matched and assigned the same id
+                        #Therefore when validating if they have matching ids they are valid
+                        questionsAndIDs = []
+                        answersAndIDs = []
 
-                    if QuestionType == 'MC':
-                        random.shuffle(Answers)
-                    if QuestionType == 'QA':
+                        for x in range(len(questions)):
+                            questionID = x
+                            question = questions[x]
+                            questionsAndIDs.append((questionID,question))
 
-                        QuestionsAndIds = []
-                        AnswersAndIds = []
-
-                        for x in range(len(Questions)):
-                            QuestionID = x
-                            Question = Questions[x]
-                            QuestionsAndIds.append((QuestionID,Question))
-
-                        for x in QuestionsAndIds:
-                            for key,value in CorrectAnswer.items():
+                        for x in questionsAndIDs:
+                            for key,value in correctAnswer.items():
                                 if x[1] == key:
-                                    AnswersAndIds.append((x[0],value))
+                                    answersAndIDs.append((x[0],value))
 
-                        random.shuffle(AnswersAndIds)
+                        random.shuffle(answersAndIDs)
 
-                        Questions = QuestionsAndIds
-                        Answers = AnswersAndIds
+                        questions = questionsAndIDs
+                        answers = answersAndIDs
 
-                    return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID)
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
                 else:
                     flash('Inorrect',category='error')
 
-                    return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
-        if QuestionType == 'SM':
+        if questionType == 'SM':
 
-            MistakeInAnswer=''
-            CorrectAnswerToMistake=''
+            mistakeInAnswer=''
+            correctAnswerToMistake=''
 
+            for x in range(len(answers.split())):
+                if answers.split()[x] != correctAnswer.split()[x]:
+                    mistakeInAnswer = answers.split()[x]
+                    correctAnswerToMistake = correctAnswer.split()[x]
 
-            for x in range(len(Answers.split())):
-                if Answers.split()[x] != CorrectAnswer.split()[x]:
-                    MistakeInAnswer = Answers.split()[x]
-                    CorrectAnswerToMistake = CorrectAnswer.split()[x]
+            answer = request.form.get('incorrectWord')
 
-
-
-            Answer = request.form.get('incorrectWord')
-
-            if Answer != None:
-
-                if Answer.lower() == MistakeInAnswer:
-                                
+            if answer != None:
+                #If answer is not empty
+                if answer.lower() == mistakeInAnswer:
+                    #If answer is correct   
                     flash('Correct',category='success')
-
-
-                    currentScore = UserScores.get(UserID)
+                    currentScore = userScores.get(UserID)
                     
                     if currentScore != None:
                         newScore = currentScore+1
-                        UserScores.update({UserID:newScore})
+                        userScores.update({UserID:newScore})
 
-                    for x in AllQuizQuestions:
-                        if len(x)!=0:
-                            if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                                AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                                
-                                QuizQuestions = x
+                    for multiPlayerQuizQuestion in allQuizQuestionsMultiplayer:
+                        if len(multiPlayerQuizQuestion)!=0:
+                            if multiPlayerQuizQuestion[0][1][0] in questionIDs and UserID == multiPlayerQuizQuestion[0][0]:
+                                #looks for multiplayer quiz associated with current user
+                                allQuizQuestionsMultiplayer[allQuizQuestionsMultiplayer.index(multiPlayerQuizQuestion)].pop(0)
+                                #completed question is removed from array
+                                quizQuestions = multiPlayerQuizQuestion
                         else:
-                            QuizQuestions = x
+                            quizQuestions = multiPlayerQuizQuestion
 
-                    if len(QuizQuestions) == 0:
-                        UserScores.pop(UserID)
+                    if len(quizQuestions) == 0:
+                        #If quiz has been completed
+                        userScores.pop(UserID)
                         return render_template('quizEnd.html')
 
-
-                        
-                    Question = QuizQuestions[0][1]
-                    Question = list(Question)
-                    QuestionType=Question[1]
-
+                    question = quizQuestions[0][1]
+                    question = list(question)
+                    questionType=question[1]
+                    #when questions are stored in the database they are turned into strings before storing
+                    #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
                     try:
-                        Questions=eval(Question[2])
+                        questions=eval(question[2])
                     except:
-                        Questions=Question[2]
-
+                        questions=question[2]
                     try:
-                        Answers=eval(Question[3])
+                        answers=eval(question[3])
                     except:
-                        Answers=Question[3]
-
+                        answers=question[3]
                     try:
-                        CorrectAnswer=eval(Question[4])
+                        correctAnswer=eval(question[4])
                     except:
-                        CorrectAnswer=Question[4]
+                        correctAnswer=question[4]
 
-                    if QuestionType == 'MC':
-                        random.shuffle(Answers)
-                    if QuestionType == 'QA':
+                    if questionType == 'MC':
+                        random.shuffle(answers)
+                    if questionType == 'QA':
+                        #The answers and questions are matched and assigned the same id
+                        #Therefore when validating if they have matching ids they are valid
 
-                        QuestionsAndIds = []
-                        AnswersAndIds = []
+                        questionsAndIDs = []
+                        answersAndIDs = []
 
-                        for x in range(len(Questions)):
-                            QuestionID = x
-                            Question = Questions[x]
-                            QuestionsAndIds.append((QuestionID,Question))
+                        for x in range(len(questions)):
+                            questionID = x
+                            question = questions[x]
+                            questionsAndIDs.append((questionID,question))
 
-                        for x in QuestionsAndIds:
-                            for key,value in CorrectAnswer.items():
+                        for x in questionsAndIDs:
+                            for key,value in correctAnswer.items():
                                 if x[1] == key:
-                                    AnswersAndIds.append((x[0],value))
+                                    answersAndIDs.append((x[0],value))
 
-                        random.shuffle(AnswersAndIds)
+                        random.shuffle(answersAndIDs)
 
-                        Questions = QuestionsAndIds
-                        Answers = AnswersAndIds
+                        questions = questionsAndIDs
+                        answers = answersAndIDs
 
-                    return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID)
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
                 else:
                     flash('Inorrect',category='error')
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
-
-                    return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswerToMistake,QuizID=QuizID)#if incorrect display correct answer and then go to next question
-
-
-#answer as question and correct mistake as answer
-
-
-        if QuestionType == 'QA':
+        if questionType == 'QA':
 
             if request.form.get('Box0') == '0' and request.form.get('Box1') == '1' and request.form.get('Box2') == '2':      
                 flash('Correct',category='success')
-
-
-                currentScore = UserScores.get(UserID)
+                #If answer is correct
+                currentScore = userScores.get(UserID)
                 
                 if currentScore != None:
                     newScore = currentScore+1
-                    UserScores.update({UserID:newScore})
+                    userScores.update({UserID:newScore})
 
-
-                for x in AllQuizQuestions:
-                    if len(x)!=0:
-                        if x[0][1][0] in QuestionIds and UserID == x[0][0]:
-                            AllQuizQuestions[AllQuizQuestions.index(x)].pop(0)
-                            
-                            QuizQuestions = x
+                for multiPlayerQuizQuestion in allQuizQuestionsMultiplayer:
+                    if len(multiPlayerQuizQuestion)!=0:
+                        if multiPlayerQuizQuestion[0][1][0] in questionIDs and UserID == multiPlayerQuizQuestion[0][0]:
+                            #looks for multiplayer quiz associated with current user
+                            allQuizQuestionsMultiplayer[allQuizQuestionsMultiplayer.index(multiPlayerQuizQuestion)].pop(0)
+                            #completed question is removed from array
+                            quizQuestions = multiPlayerQuizQuestion
                     else:
-                        QuizQuestions = x
+                        quizQuestions = multiPlayerQuizQuestion
 
-                if len(QuizQuestions) == 0:
-                    UserScores.pop(UserID)
+                if len(quizQuestions) == 0:
+                    #If quiz has been completed
+                    userScores.pop(UserID)
                     return render_template('quizEnd.html')                    
                     
-                Question = QuizQuestions[0][1]
-                Question = list(Question)
-                QuestionType=Question[1]
+                question = quizQuestions[0][1]
+                question = list(question)
+                questionType=question[1]
+                #when questions are stored in the database they are turned into strings before storing
+                #Therefore array or a dictionary that is in a string needs to be converted back into an array or dictionary
+                try:
+                    questions=eval(question[2])
+                except:
+                    questions=question[2]
 
                 try:
-                    Questions=eval(Question[2])
+                    answers=eval(question[3])
                 except:
-                    Questions=Question[2]
+                    answers=question[3]
 
                 try:
-                    Answers=eval(Question[3])
+                    correctAnswer=eval(question[4])
                 except:
-                    Answers=Question[3]
+                    correctAnswer=question[4]
 
-                try:
-                    CorrectAnswer=eval(Question[4])
-                except:
-                    CorrectAnswer=Question[4]
+                if questionType == 'MC':
+                    random.shuffle(answers)
+                if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
+                    questionsAndIDs = []
+                    answersAndIDs = []
 
-                if QuestionType == 'MC':
-                    random.shuffle(Answers)
-                if QuestionType == 'QA':
+                    for x in range(len(questions)):
+                        questionID = x
+                        question = questions[x]
+                        questionsAndIDs.append((questionID,question))
 
-                    QuestionsAndIds = []
-                    AnswersAndIds = []
-
-                    for x in range(len(Questions)):
-                        QuestionID = x
-                        Question = Questions[x]
-                        QuestionsAndIds.append((QuestionID,Question))
-
-                    for x in QuestionsAndIds:
-                        for key,value in CorrectAnswer.items():
+                    for x in questionsAndIDs:
+                        for key,value in correctAnswer.items():
                             if x[1] == key:
-                                AnswersAndIds.append((x[0],value))
+                                answersAndIDs.append((x[0],value))
 
-                    random.shuffle(AnswersAndIds)
+                    random.shuffle(answersAndIDs)
 
-                    Questions = QuestionsAndIds
-                    Answers = AnswersAndIds
+                    questions = questionsAndIDs
+                    answers = answersAndIDs
 
-                return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID)
-
-            
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
             else:
 
-                return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
-    return render_template("multiplayerQuiz.html",QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer,QuizID=QuizID)
-
-
+    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #return render_template('multiplayerQuiz.html',QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer)
-
-
-
-
-
-
-
-
-
-@QuizSection.route('/chooseDeckToQuizOn',  methods=['GET', 'POST'])
+@quizSection.route('/chooseDeckToQuizOn',  methods=['GET', 'POST'])
 @login_required
-def quizMenchooseDeckToQuizOnu():
-    return redirect(url_for("FlashcardsSection.chooseFlashcardDeckToManage",PageToDisplay='TakeQuiz'))
+def quizMenchooseDeckToQuizOn():
+    #Redirects to page which allow the user to choose the flashcard deck to take the quiz on
+    return redirect(url_for("flashcardsSection.chooseFlashcardDeckToManage",PageToDisplay='TakeQuiz'))
 
 
-@QuizSection.route('/TakeQuiz/<DeckName>',  methods=['GET', 'POST'])
+
+@quizSection.route('/TakeQuiz/<DeckName>',  methods=['GET', 'POST'])
 @login_required
 def TakeQuiz(DeckName):
     UserID=current_user.get_id()
 
     if request.method == "POST":
-        NumberOfQuestions = request.form.get('number')
+        numberOfQuestions = request.form.get('number')
 
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
-# cursor.execute("SELECT COUNT(FlashcardID) FROM Flashcard")
         cursor.execute("""  SELECT COUNT(Flashcard.FlashcardID)
                             FROM Flashcard,FlashcardsDecksAndUserIDs,ParentFlashcardDeck
                             WHERE FlashcardsDecksAndUserIDs.UserID=?
@@ -1345,474 +1287,456 @@ def TakeQuiz(DeckName):
         
         """,(UserID,DeckName,))
 
-        NumerOfFlashcards = cursor.fetchall()
+        numerOfFlashcards = cursor.fetchall()
+        #Number of flashcards are queried assuming deck name is a parent deck
 
-        if NumerOfFlashcards[0][0] == 0:
+        if numerOfFlashcards[0][0] == 0:
+            #If deck name is not a parent deck
             cursor.execute("""  SELECT COUNT(Flashcard.FlashcardID)
                     FROM Flashcard,FlashcardsDecksAndUserIDs,FlashcardDeck
                     WHERE FlashcardsDecksAndUserIDs.UserID=?
                     AND FlashcardsDecksAndUserIDs.FlashcardID=Flashcard.FlashcardID
                     AND FlashcardDeck.FlashcardDeckName=?
-                    AND FlashcardDeck.FlashcardDeckID=FlashcardsDecksAndUserIDs.FlashcardDeckID""",(UserID,DeckName,))#Checks if parent deck
-            NumerOfFlashcards = cursor.fetchall()
+                    AND FlashcardDeck.FlashcardDeckID=FlashcardsDecksAndUserIDs.FlashcardDeckID""",(UserID,DeckName,))
+            numerOfFlashcards = cursor.fetchall()
+            #Number of flashcards in the deck are queried
         connection.close()
 
-        if int(NumberOfQuestions) > int(NumerOfFlashcards[0][0]):
-            flash(f'The Maximum number of questions for the deck you have chosen is {NumerOfFlashcards[0][0]}',category='error')
+        if int(numberOfQuestions) > int(numerOfFlashcards[0][0]):
+            flash(f'The Maximum number of questions for the deck you have chosen is {numerOfFlashcards[0][0]}',category='error')
             return render_template("chooseQuizSize.html",user=current_user)
-
-
-
-
-#choose flashcard id where deckname=deckname if Number of questions is greater than query then re render template
         
-
-        return redirect(url_for("QuizSection.quiz",DeckName=DeckName,NumberOfQuestions=NumberOfQuestions))
+        return redirect(url_for("quizSection.quiz",DeckName=DeckName,NumberOfQuestions=numberOfQuestions))
 
     return render_template("chooseQuizSize.html",user=current_user)
 
 
 
-
-
-
-@QuizSection.route('/quiz/<DeckName>/<NumberOfQuestions>',  methods=['GET', 'POST'])
+@quizSection.route('/quiz/<DeckName>/<numberOfQuestions>',  methods=['GET', 'POST'])
 @login_required
-def quiz(DeckName,NumberOfQuestions):
+def quiz(DeckName,numberOfQuestions):
     UserQuiz = ''
     UserID= current_user.get_id()
     if request.method == 'GET':
+        #If the page is loaded
 
-        for x in range(len(UserAndQuizObjects)):
-            IdOfUser = UserAndQuizObjects[x][0]
+        for x in range(len(userAndQuizObjects)):
+            IdOfUser = userAndQuizObjects[x][0]
             if IdOfUser == UserID:
-                UserAndQuizObjects.pop(x)
-
-        UserQuiz = Quiz(UserID,DeckName,NumberOfQuestions)
-
-
+                userAndQuizObjects.pop(x)
+                #If the user has a quiz on going then it is overridden with new quiz
+        UserQuiz = Quiz(UserID,DeckName,numberOfQuestions)
+        #Quiz object is created
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
-        cursor.execute("INSERT INTO Quiz(QuizID,NumberOfQuestions,NumberOfQuestionsAnsweredCorrectly,DeckName) values(?,?,?,?)",(UserQuiz.getQuizID(),NumberOfQuestions,0,DeckName))
+        cursor.execute("INSERT INTO Quiz(QuizID,NumberOfQuestions,NumberOfQuestionsAnsweredCorrectly,DeckName) values(?,?,?,?)",(UserQuiz.getQuizID(),numberOfQuestions,0,DeckName))
         connection.commit()
         connection.close()
+        #Database is updated with the details of the new quiz
+        currentQuestion = UserQuiz.__nextQuestion()
+        questionType = currentQuestion.getQuestionType()
+        correctAnswer = currentQuestion.getCorrectAnswer()
+        questions = currentQuestion.getQuestion()
+        answers = currentQuestion.getAnswer()
+        #Next question and answer is returned
 
-        CurrentQuestion = UserQuiz.NextQuestion()
-        QuestionType = CurrentQuestion.getQuestionType()
-        CorrectAnswer = CurrentQuestion.getCorrectAnswer()
+        if questionType == 'QA':
+            #The answers and questions are matched and assigned the same id
+            #Therefore when validating if they have matching ids they are valid
+            questionsAndIDs = []
+            answersAndIDs = []
 
-        Questions = CurrentQuestion.getQuestion()
-        Answers = CurrentQuestion.getAnswer()
+            for x in range(len(questions)):
+                questionID = x
+                question = questions[x]
+                questionsAndIDs.append((questionID,question))
 
-        if QuestionType == 'QA':
-
-            QuestionsAndIds = []
-            AnswersAndIds = []
-
-            for x in range(len(Questions)):
-                QuestionID = x
-                Question = Questions[x]
-                QuestionsAndIds.append((QuestionID,Question))
-
-            for x in range(len(Answers)):
+            for x in range(len(answers)):
                 AnswerID = x
-                Answer = Answers[x]
-                AnswersAndIds.append((AnswerID,Answer))
+                answer = answers[x]
+                answersAndIDs.append((AnswerID,answer))
 
-            Questions = QuestionsAndIds
-            Answers = AnswersAndIds
+            questions = questionsAndIDs
+            answers = answersAndIDs
 
         UserAndQuizObject = (UserID,UserQuiz)
-        UserAndQuizObjects.append(UserAndQuizObject)
-
+        userAndQuizObjects.append(UserAndQuizObject)
 
     if request.method == 'POST':
 
-        for UserAndQuizObject in UserAndQuizObjects:
-            if UserAndQuizObject[0]==UserID:
+        for UserAndQuizObject in userAndQuizObjects:
+            if UserAndQuizObject[0]==UserID:    #If the quiz object that belongs to the use is returned
                 UserQuiz = UserAndQuizObject[1]
 
-        if UserQuiz.getCompletedQuestions().size() == 0:
-            CurrentQuestion = UserQuiz.getQuestions().peek()
+        if UserQuiz.__getCompletedQuestions().size() == 0:
+            currentQuestion = UserQuiz.getQuestions().peek()
         else:
-            CurrentQuestion = UserQuiz.getCompletedQuestions().peek()
-        QuestionType = CurrentQuestion.getQuestionType()
-        Questions = CurrentQuestion.getQuestion()
-        Answers = CurrentQuestion.getAnswer()
-        CorrectAnswer = CurrentQuestion.getCorrectAnswer()
-        
+            currentQuestion = UserQuiz.__getCompletedQuestions().peek()
 
-        if request.form.get('NextQuestion') == 'Next Question':
-            if UserQuiz.getQuestions().size() == 0:
+        questionType = currentQuestion.getQuestionType()
+        questions = currentQuestion.getQuestion()
+        answers = currentQuestion.getAnswer()
+        correctAnswer = currentQuestion.getCorrectAnswer()
+        #Next question and answer is returned
+        
+        if request.form.get('__nextQuestion') == 'Next Question':
+            if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                 count=0
                 QuizID = None
-                for UserAndQuizObject in UserAndQuizObjects:
-                    if UserAndQuizObject[0]==UserID:
+                for UserAndQuizObject in userAndQuizObjects:
+                    if UserAndQuizObject[0]==UserID:    #If the quiz object that belongs to the use is returned
                         QuizID = UserAndQuizObject[1].getQuizID()
-                        UserAndQuizObjects.pop(count)
+                        userAndQuizObjects.pop(count)   #Quiz object is removed as quiz has been completed
                     count+=1
-                return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
+                return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
+                #Display results to the user
 
+            currentQuestion = UserQuiz.__nextQuestion()
+            questionType = currentQuestion.getQuestionType()
+            questions = currentQuestion.getQuestion()
+            answers = currentQuestion.getAnswer()
+            correctAnswer = currentQuestion.getCorrectAnswer()
+            #Next question and answer is returned
+            if questionType == 'MC':
+                random.shuffle(answers)
+            if questionType == 'QA':
+                #The answers and questions are matched and assigned the same id
+                #Therefore when validating if they have matching ids they are valid
+                questionsAndIDs = []
+                answersAndIDs = []
 
-            CurrentQuestion = UserQuiz.NextQuestion()
-            QuestionType = CurrentQuestion.getQuestionType()
-            Questions = CurrentQuestion.getQuestion()
-            Answers = CurrentQuestion.getAnswer()
-            CorrectAnswer = CurrentQuestion.getCorrectAnswer()
+                for x in range(len(questions)):
+                    questionID = x
+                    question = questions[x]
+                    questionsAndIDs.append((questionID,question))
 
-            if QuestionType == 'MC':
-                random.shuffle(Answers)
-            if QuestionType == 'QA':
-
-                QuestionsAndIds = []
-                AnswersAndIds = []
-
-                for x in range(len(Questions)):
-                    QuestionID = x
-                    Question = Questions[x]
-                    QuestionsAndIds.append((QuestionID,Question))
-
-                for x in QuestionsAndIds:
-                    for key,value in CorrectAnswer.items():
+                for x in questionsAndIDs:
+                    for key,value in correctAnswer.items():
                         if x[1] == key:
-                            AnswersAndIds.append((x[0],value))
+                            answersAndIDs.append((x[0],value))
 
-                random.shuffle(AnswersAndIds)
+                random.shuffle(answersAndIDs)
 
-                Questions = QuestionsAndIds
-                Answers = AnswersAndIds
+                questions = questionsAndIDs
+                answers = answersAndIDs
 
-            return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer)
+            return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
 
-        if QuestionType == 'MC':
+        if questionType == 'MC':
             multipleChoiceAnswer = request.form.get('answer')
             if request.form.get('Choose') == 'Submit':
-                if multipleChoiceAnswer == CorrectAnswer:
-
+                if multipleChoiceAnswer == correctAnswer:
                     flash('Correct',category='success')
 
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                    QuestionInfo = cursor.fetchall()
+                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                    questionInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,str(CurrentQuestion.getQuestionID()),))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,str(currentQuestion.getQuestionID()),))
                     connection.commit()
                     
                     cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(str(UserQuiz.getQuizID()),))
-                    QuizInfo = cursor.fetchall()
+                    quizInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
+                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
                     connection.commit()
 
                     connection.close()
 
-                    if UserQuiz.getQuestions().size() == 0:#end of quiz
+                    if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                         count=0
                         QuizID = None
-                        for UserAndQuizObject in UserAndQuizObjects:
-                            if UserAndQuizObject[0]==UserID:
+                        for UserAndQuizObject in userAndQuizObjects:
+                            if UserAndQuizObject[0]==UserID:    #If the quiz object that belongs to the use is returned
                                 QuizID = UserAndQuizObject[1].getQuizID()
-                                UserAndQuizObjects.pop(count)
+                                userAndQuizObjects.pop(count)   #Quiz object is removed as quiz has been completed
                             count+=1
-                        return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
+                        return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
+                        #Display results to the user
 
-                    CurrentQuestion = UserQuiz.NextQuestion()
-                    QuestionType = CurrentQuestion.getQuestionType()
-                    Questions = CurrentQuestion.getQuestion()
-                    Answers = CurrentQuestion.getAnswer()
-                    CorrectAnswer = CurrentQuestion.getCorrectAnswer()
+                    currentQuestion = UserQuiz.__nextQuestion()
+                    questionType = currentQuestion.getQuestionType()
+                    questions = currentQuestion.getQuestion()
+                    answers = currentQuestion.getAnswer()
+                    correctAnswer = currentQuestion.getCorrectAnswer()
+                    #Next question and answer is returned
 
-                    if QuestionType == 'MC':
-                        random.shuffle(Answers)
-                    if QuestionType == 'QA':
+                    if questionType == 'MC':
+                        random.shuffle(answers)
+                    if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
+                        questionsAndIDs = []
+                        answersAndIDs = []
 
-                        QuestionsAndIds = []
-                        AnswersAndIds = []
+                        for x in range(len(questions)):
+                            questionID = x
+                            question = questions[x]
+                            questionsAndIDs.append((questionID,question))
 
-                        for x in range(len(Questions)):
-                            QuestionID = x
-                            Question = Questions[x]
-                            QuestionsAndIds.append((QuestionID,Question))
-
-                        for x in QuestionsAndIds:
-                            for key,value in CorrectAnswer.items():
+                        for x in questionsAndIDs:
+                            for key,value in correctAnswer.items():
                                 if x[1] == key:
-                                    AnswersAndIds.append((x[0],value))
+                                    answersAndIDs.append((x[0],value))
 
-                        random.shuffle(AnswersAndIds)
+                        random.shuffle(answersAndIDs)
 
-                        Questions = QuestionsAndIds
-                        Answers = AnswersAndIds
+                        questions = questionsAndIDs
+                        answers = answersAndIDs
 
-
-                    return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer)
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
                 else:
                     flash('Inorrect',category='error')
 
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                    QuestionInfo = cursor.fetchall()
+                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                    questionInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,str(CurrentQuestion.getQuestionID()),))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,str(currentQuestion.getQuestionID()),))
                     connection.commit()
                     connection.close()
 
-                    return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer)#if incorrect display correct answer and then go to next question
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
 
-
-        if QuestionType == 'FB':
-            Answer = request.form.get('Answer')
-            if Answer!=None:
-                if Answer.lower() == CorrectAnswer:
-                        
+        if questionType == 'FB':
+            answer = request.form.get('answer')
+            if answer!=None:
+                if answer.lower() == correctAnswer:
                     flash('Correct',category='success')
 
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
+                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                    questionInfo = cursor.fetchall()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                    QuestionInfo = cursor.fetchall()
-
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,str(CurrentQuestion.getQuestionID()),))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,str(currentQuestion.getQuestionID()),))
                     connection.commit()
 
                     cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(str(UserQuiz.getQuizID()),))
-                    QuizInfo = cursor.fetchall()
+                    quizInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
+                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
                     connection.commit()
 
                     connection.close()
 
-
-
-                    if UserQuiz.getQuestions().size() == 0:
+                    if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                         count=0
                         QuizID = None
-                        for UserAndQuizObject in UserAndQuizObjects:
-                            if UserAndQuizObject[0]==UserID:
+                        for UserAndQuizObject in userAndQuizObjects:
+                            if UserAndQuizObject[0]==UserID:    #If the quiz object that belongs to the use is returned
                                 QuizID = UserAndQuizObject[1].getQuizID()
-                                UserAndQuizObjects.pop(count)
+                                userAndQuizObjects.pop(count)   #Quiz object is removed as quiz has been completed
                             count+=1
-                        return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
+                        return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
+                        #Display results to the user
 
+                    currentQuestion = UserQuiz.__nextQuestion()
+                    questionType = currentQuestion.getQuestionType()
+                    questions = currentQuestion.getQuestion()
+                    answers = currentQuestion.getAnswer()
+                    correctAnswer = currentQuestion.getCorrectAnswer()
+                    #Next question and answer is returned
 
-                    CurrentQuestion = UserQuiz.NextQuestion()
-                    QuestionType = CurrentQuestion.getQuestionType()
-                    Questions = CurrentQuestion.getQuestion()
-                    Answers = CurrentQuestion.getAnswer()
-                    CorrectAnswer = CurrentQuestion.getCorrectAnswer()
+                    if questionType == 'MC':
+                        random.shuffle(answers)
+                    if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
+                        questionsAndIDs = []
+                        answersAndIDs = []
 
-                    if QuestionType == 'MC':
-                        random.shuffle(Answers)
-                    if QuestionType == 'QA':
+                        for x in range(len(questions)):
+                            questionID = x
+                            question = questions[x]
+                            questionsAndIDs.append((questionID,question))
 
-                        QuestionsAndIds = []
-                        AnswersAndIds = []
-
-                        for x in range(len(Questions)):
-                            QuestionID = x
-                            Question = Questions[x]
-                            QuestionsAndIds.append((QuestionID,Question))
-
-                        for x in QuestionsAndIds:
-                            for key,value in CorrectAnswer.items():
+                        for x in questionsAndIDs:
+                            for key,value in correctAnswer.items():
                                 if x[1] == key:
-                                    AnswersAndIds.append((x[0],value))
+                                    answersAndIDs.append((x[0],value))
 
-                        random.shuffle(AnswersAndIds)
+                        random.shuffle(answersAndIDs)
 
-                        Questions = QuestionsAndIds
-                        Answers = AnswersAndIds
+                        questions = questionsAndIDs
+                        answers = answersAndIDs
 
-                    return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer)
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
                 else:
                     flash('Inorrect',category='error')
 
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                    QuestionInfo = cursor.fetchall()
+                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                    questionInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,str(CurrentQuestion.getQuestionID()),))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,str(currentQuestion.getQuestionID()),))
                     connection.commit()
                     connection.close()
 
-                    return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer)#if incorrect display correct answer and then go to next question
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
 
-        if QuestionType == 'SM':
+        if questionType == 'SM':
 
-            MistakeInAnswer=''
-            CorrectAnswerToMistake=''
+            mistakeInAnswer=''
+            correctAnswerToMistake=''
 
+            for x in range(len(answers.split())):
+                if answers.split()[x] != correctAnswer.split()[x]:
+                    mistakeInAnswer = answers.split()[x]
+                    correctAnswerToMistake = correctAnswer.split()[x]
 
-            for x in range(len(Answers.split())):
-                if Answers.split()[x] != CorrectAnswer.split()[x]:
-                    MistakeInAnswer = Answers.split()[x]
-                    CorrectAnswerToMistake = CorrectAnswer.split()[x]
-
-
-
-            Answer = request.form.get('incorrectWord')
-
-            if Answer != None:
-
-                if Answer.lower() == MistakeInAnswer:
-                                
+            answer = request.form.get('incorrectWord')
+            #Form data recieved
+            if answer != None:
+                #If answer is not empty
+                if answer.lower() == mistakeInAnswer:         
                     flash('Correct',category='success')
 
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                    QuestionInfo = cursor.fetchall()
+                    cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                    questionInfo = cursor.fetchall()
 
-
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,str(CurrentQuestion.getQuestionID()),))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,str(currentQuestion.getQuestionID()),))
                     connection.commit()
 
-
                     cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(str(UserQuiz.getQuizID()),))
-                    QuizInfo = cursor.fetchall()
+                    quizInfo = cursor.fetchall()
 
-                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
+                    cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
                     connection.commit()
 
                     connection.close()
 
-                    if UserQuiz.getQuestions().size() == 0:
+                    if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                         count=0
                         QuizID = None
-                        for UserAndQuizObject in UserAndQuizObjects:
-                            if UserAndQuizObject[0]==UserID:
+                        for UserAndQuizObject in userAndQuizObjects:
+                            if UserAndQuizObject[0]==UserID:    #If the quiz object that belongs to the use is returned
                                 QuizID = UserAndQuizObject[1].getQuizID()
-                                UserAndQuizObjects.pop(count)
+                                userAndQuizObjects.pop(count)   #Quiz object is removed as quiz has been completed
                             count+=1
-                        return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
+                        return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
+                        #Display results to the user
 
-                    CurrentQuestion = UserQuiz.NextQuestion()
-                    QuestionType = CurrentQuestion.getQuestionType()
-                    Questions = CurrentQuestion.getQuestion()
-                    Answers = CurrentQuestion.getAnswer()
-                    CorrectAnswer = CurrentQuestion.getCorrectAnswer()
+                    currentQuestion = UserQuiz.__nextQuestion()
+                    questionType = currentQuestion.getQuestionType()
+                    questions = currentQuestion.getQuestion()
+                    answers = currentQuestion.getAnswer()
+                    correctAnswer = currentQuestion.getCorrectAnswer()
+                    #Next question and answer is returned
 
-                    if QuestionType == 'MC':
-                        random.shuffle(Answers)
-                    if QuestionType == 'QA':
+                    if questionType == 'MC':
+                        random.shuffle(answers)
+                    if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
+                        questionsAndIDs = []
+                        answersAndIDs = []
 
-                        QuestionsAndIds = []
-                        AnswersAndIds = []
+                        for x in range(len(questions)):
+                            questionID = x
+                            question = questions[x]
+                            questionsAndIDs.append((questionID,question))
 
-                        for x in range(len(Questions)):
-                            QuestionID = x
-                            Question = Questions[x]
-                            QuestionsAndIds.append((QuestionID,Question))
-
-                        for x in QuestionsAndIds:
-                            for key,value in CorrectAnswer.items():
+                        for x in questionsAndIDs:
+                            for key,value in correctAnswer.items():
                                 if x[1] == key:
-                                    AnswersAndIds.append((x[0],value))
+                                    answersAndIDs.append((x[0],value))
 
-                        random.shuffle(AnswersAndIds)
+                        random.shuffle(answersAndIDs)
 
-                        Questions = QuestionsAndIds
-                        Answers = AnswersAndIds
+                        questions = questionsAndIDs
+                        answers = answersAndIDs
 
-                    return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer)
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
                 else:
                     flash('Inorrect',category='error')
 
                     connection = sqlite3.connect("database.db",check_same_thread=False)
                     cursor = connection.cursor()
 
+                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                    questionInfo = cursor.fetchall()
 
-                    cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                    QuestionInfo = cursor.fetchall()
-
-                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,str(CurrentQuestion.getQuestionID()),))
+                    cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,str(currentQuestion.getQuestionID()),))
                     connection.commit()
                     connection.close()
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake)#if incorrect display correct answer and then go to next question
 
-                    return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswerToMistake)#if incorrect display correct answer and then go to next question
-
-
-#answer as question and correct mistake as answer
-
-
-        if QuestionType == 'QA':
+        if questionType == 'QA':
 
             if request.form.get('Box0') == '0' and request.form.get('Box1') == '1' and request.form.get('Box2') == '2':      
                 flash('Correct',category='success')
 
-
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
 
-                cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                QuestionInfo = cursor.fetchall()
+                cursor.execute("SELECT NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                questionInfo = cursor.fetchall()
 
-
-                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,int(QuestionInfo[0][1])+1,str(CurrentQuestion.getQuestionID()),))
+                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=?,NumberOfTimesAnsweredCorrectly=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,int(questionInfo[0][1])+1,str(currentQuestion.getQuestionID()),))
                 connection.commit()
 
                 cursor.execute("SELECT NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(str(UserQuiz.getQuizID()),))
-                QuizInfo = cursor.fetchall()
+                quizInfo = cursor.fetchall()
 
-                cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(QuizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
+                cursor.execute("UPDATE Quiz SET NumberOfQuestionsAnsweredCorrectly=? WHERE QuizID=?",(int(quizInfo[0][0])+1,str(UserQuiz.getQuizID()),))
                 connection.commit()
 
                 connection.close()
 
-
-
-                if UserQuiz.getQuestions().size() == 0:
+                if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                     count=0
                     QuizID = None
-                    for UserAndQuizObject in UserAndQuizObjects:
-                        if UserAndQuizObject[0]==UserID:
+                    for UserAndQuizObject in userAndQuizObjects:
+                        if UserAndQuizObject[0]==UserID:    #If the quiz object that belongs to the use is returned
                             QuizID = UserAndQuizObject[1].getQuizID()
-                            UserAndQuizObjects.pop(count)
+                            userAndQuizObjects.pop(count)   #Quiz object is removed as quiz has been completed
                         count+=1
-                    return redirect(url_for("QuizSection.viewResults",QuizID=QuizID))
+                    return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
+                    #Display results to the user
 
+                currentQuestion = UserQuiz.__nextQuestion()
+                questionType = currentQuestion.getQuestionType()
+                questions = currentQuestion.getQuestion()
+                answers = currentQuestion.getAnswer()
+                correctAnswer = currentQuestion.getCorrectAnswer()
+                #Next question and answer is returned
 
-                CurrentQuestion = UserQuiz.NextQuestion()
-                QuestionType = CurrentQuestion.getQuestionType()
-                Questions = CurrentQuestion.getQuestion()
-                Answers = CurrentQuestion.getAnswer()
-                CorrectAnswer = CurrentQuestion.getCorrectAnswer()
+                if questionType == 'MC':
+                    random.shuffle(answers)
+                if questionType == 'QA':
+                    #The answers and questions are matched and assigned the same id
+                    #Therefore when validating if they have matching ids they are valid
+                    questionsAndIDs = []
+                    answersAndIDs = []
 
-                if QuestionType == 'MC':
-                    random.shuffle(Answers)
-                if QuestionType == 'QA':
+                    for x in range(len(questions)):
+                        questionID = x
+                        question = questions[x]
+                        questionsAndIDs.append((questionID,question))
 
-                    QuestionsAndIds = []
-                    AnswersAndIds = []
-
-                    for x in range(len(Questions)):
-                        QuestionID = x
-                        Question = Questions[x]
-                        QuestionsAndIds.append((QuestionID,Question))
-
-                    for x in QuestionsAndIds:
-                        for key,value in CorrectAnswer.items():
+                    for x in questionsAndIDs:
+                        for key,value in correctAnswer.items():
                             if x[1] == key:
-                                AnswersAndIds.append((x[0],value))
+                                answersAndIDs.append((x[0],value))
 
-                    random.shuffle(AnswersAndIds)
+                    random.shuffle(answersAndIDs)
 
-                    Questions = QuestionsAndIds
-                    Answers = AnswersAndIds
+                    questions = questionsAndIDs
+                    answers = answersAndIDs
 
-                return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer)
-
+                return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
             
             else:
                 flash('Inorrect',category='error')
@@ -1820,32 +1744,34 @@ def quiz(DeckName,NumberOfQuestions):
                 connection = sqlite3.connect("database.db",check_same_thread=False)
                 cursor = connection.cursor()
 
-                cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(CurrentQuestion.getQuestionID()),))
-                QuestionInfo = cursor.fetchall()
-                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(QuestionInfo[0][0])+1,str(CurrentQuestion.getQuestionID()),))
+                cursor.execute("SELECT NumberOfTimesAnswered FROM Question WHERE QuestionID=?",(str(currentQuestion.getQuestionID()),))
+                questionInfo = cursor.fetchall()
+                cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,str(currentQuestion.getQuestionID()),))
+                
                 connection.commit()
                 connection.close()
 
-                return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=True,CorrectAnswer=CorrectAnswer)#if incorrect display correct answer and then go to next question
+                return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
 
-    return render_template("QuizPreview.html",user=current_user,QuestionType=QuestionType,Questions=Questions,Answers=Answers,DisplayCorrectAnswer=False,CorrectAnswer=CorrectAnswer)
-
-
+    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
 
 
-@QuizSection.route('/viewResults/<QuizID>',  methods=['GET', 'POST'])
+
+@quizSection.route('/viewResults/<QuizID>',  methods=['GET', 'POST'])
 @login_required
 def viewResults(QuizID):
 
     connection = sqlite3.connect("database.db",check_same_thread=False)
     cursor = connection.cursor()
+    
     cursor.execute("SELECT NumberOfQuestions,NumberOfQuestionsAnsweredCorrectly FROM Quiz WHERE QuizID=?",(QuizID,))
     Results = cursor.fetchall()
     connection.close()
-
+    #The scores for the quiz are queried
     if request.method == 'POST':
         if request.form.get('Finish') == 'Finish':
-            return redirect(url_for('HomePage.home'))
+            #If user is finished viewing their results
+            return redirect(url_for('homePage.home'))
 
     return render_template("viewResults.html",user=current_user,Results=Results,)
-    
+
