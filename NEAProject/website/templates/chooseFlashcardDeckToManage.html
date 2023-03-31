@@ -5,7 +5,7 @@ content %} {% if DeckToDisplay == 'Parent' %}
   <div class="col">
     <form
       method="post"
-      action="{{url_for('flashcardsSection.chooseFlashcardDeckToManage',PageToDisplay=PageToDisplay,DeckToDisplay='Child')}}"
+      action="{{url_for('flashcardsSection.chooseFlashcardDeckToManage',pageToDisplay=PageToDisplay,DeckToDisplay='Child')}}"
     >
       <h3 class="text-center mb-3">Choose Flashcard Deck</h3>
       {% for Deck in Decks%}
@@ -45,7 +45,7 @@ content %} {% if DeckToDisplay == 'Parent' %}
   <div class="col-6">
     <form
       method="post"
-      action="{{url_for('flashcardsSection.chooseFlashcardDeckToManage',PageToDisplay=PageToDisplay)}}"
+      action="{{url_for('flashcardsSection.chooseFlashcardDeckToManage',pageToDisplay=PageToDisplay)}}"
     >
       <h3 class="text-center mb-3">Manage Flashcards</h3>
       {% for Deck in Decks%}

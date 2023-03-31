@@ -38,7 +38,7 @@ content%}
 
 <form
   method="POST"
-  action="{{url_for('flashcardsSection.ChooseFlashcardToEdit',DeckName=DeckName)}}"
+  action="{{url_for('flashcardsSection.ChooseFlashcardToEdit',deckName=DeckName)}}"
 >
   <div>
     <input
@@ -55,7 +55,7 @@ content%}
 <form
   method="POST"
   style="color: #767c7c"
-  action="{{url_for('flashcardsSection.EditContent',OldQuestionAndAnswerID=QuestionAndAnswer[2],DeckName=DeckName)}}"
+  action="{{url_for('flashcardsSection.EditContent',OldQuestionAndAnswerID=QuestionAndAnswer[2],deckName=DeckName)}}"
 >
   <div class="form-group">
     <label for="Question">Question</label>
