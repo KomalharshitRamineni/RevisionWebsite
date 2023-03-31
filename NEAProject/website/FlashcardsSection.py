@@ -24,14 +24,14 @@ def flashcards():
             return redirect(url_for('flashcardsSection.importFlashcards'))
             #If API connection is successful then redirected to page to import flashcards
         elif  request.form.get('action2') == 'Manage Flashcards':
-            return redirect(url_for('flashcardsSection.chooseFlashcardDeckToManage',PageToDisplay='ManageFlashcards'))
+            return redirect(url_for('flashcardsSection.chooseFlashcardDeckToManage',pageToDisplay='ManageFlashcards'))
             #Redirects to page to choose a flashcard deck to practice
         elif request.form.get('action3') == 'Create New Deck':
             return redirect(url_for('flashcardsSection.CreateNewDeck'))
             #Redirects to page to create new deck
 
         elif request.form.get('action4') == 'Practice Flashcards':
-            return redirect(url_for('flashcardsSection.chooseFlashcardDeckToManage',PageToDisplay='PracticeFlashcards'))
+            return redirect(url_for('flashcardsSection.chooseFlashcardDeckToManage',pageToDisplay='PracticeFlashcards'))
             #Redirects to page to choose a flashcard deck to practice
         else:
             pass
@@ -42,11 +42,11 @@ def flashcards():
    
 
 
-@flashcardsSection.route('/PracticeFlashcards/<DeckName>',  methods=['GET', 'POST'])
+@flashcardsSection.route('/PracticeFlashcards/<deckName>',  methods=['GET', 'POST'])
 @login_required
-def PracticeFlashcards(DeckName):
+def PracticeFlashcards(deckName):
     UserID = current_user.get_id()
-    #Deck = FlashcardDeck() *
+    Deck = FlashcardDeck()
     if request.method == 'GET':
 
         for x in range(len(userAndFlashcardDeckObjects)):
@@ -65,7 +65,7 @@ def PracticeFlashcards(DeckName):
             ON FlashcardsDecksAndUserIDs.ParentFlashcardDeckID = ParentFlashcardDeck.ParentFlashcardDeckID 
             WHERE ParentFlashcardDeck.FlashcardDeckName = ? 
             AND FlashcardsDecksAndUserIDs.UserID = ? 
-        """, (DeckName, UserID,))
+        """, (deckName, UserID,))
         #Parent deck id of the deck name specified is queried
         parentDeckIDs = cursor.fetchone()
         if parentDeckIDs == None:
@@ -77,7 +77,7 @@ def PracticeFlashcards(DeckName):
                 ON FlashcardDeck.FlashcardDeckID = FlashcardsDecksAndUserIDs.FlashcardDeckID 
                 WHERE FlashcardsDecksAndUserIDs.UserID = ? 
                 AND FlashcardDeck.FlashcardDeckName = ?
-            """, (UserID, DeckName,))
+            """, (UserID, deckName,))
             #If deck name is not a parent deck then it has to be a child deck
             flashcardDeckID = cursor.fetchall()
             #The deck id of the deck name specified is queried
@@ -94,8 +94,8 @@ def PracticeFlashcards(DeckName):
                 
                 newFlashcard = Flashcard(flashcardID[0],question,answer,UserID)
                 #New object is created with the details queried
-                newFlashcard.__setKeywords(keywords)
-                Deck.__addToFlashcardDeck(newFlashcard)
+                newFlashcard.setKeywords(keywords)
+                Deck.addToFlashcardDeck(newFlashcard)
                 #The flashcard object is pushed onto the flashcard deck stack
 
             connection.close()
@@ -117,8 +117,8 @@ def PracticeFlashcards(DeckName):
                 keywords = questionsAnswersAndKeywords[0][2]
                 newFlashcard = Flashcard(flashcardID[0],question,answer,UserID)
                 #Flashcard object is created with the details from the query
-                newFlashcard.__setKeywords(keywords)
-                Deck.__addToFlashcardDeck(newFlashcard)
+                newFlashcard.setKeywords(keywords)
+                Deck.addToFlashcardDeck(newFlashcard)
                 #The flashcard object is pushed onto the flashcard deck stack
 
             connection.close()
@@ -130,11 +130,11 @@ def PracticeFlashcards(DeckName):
             if userAndFlashcardDeckObject[0]==UserID:
                 Deck = userAndFlashcardDeckObject[1]
                 #Search for the deck object associated with the user's id
-        contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+        contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
         #The first question in the deck is returned so that it can be displayed to the user
         actionName = 'question'
         #Specifies to the template that the string being passed is a question
-        return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+        return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
         #page is displayed with the first question
     if request.method == 'POST':
 
@@ -147,63 +147,63 @@ def PracticeFlashcards(DeckName):
             #If user presses button to flip card
             actionName = 'answer'
             #Specifies to the template that the string being passed is a now an answer
-            contentToDisplay = Deck.__peekFlashcardDeck().getAnswer()
+            contentToDisplay = Deck.peekFlashcardDeck().getAnswer()
             #The answer to the current flashcard is returned
-            return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+            return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
 
         if request.form.get('answer') == 'Flip Card':
             actionName = 'question'
             #Specifies to the template that the string being passed is a now an answer
-            contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+            contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
             #The question to the current flashcard is returned
-            return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+            return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
 
         if request.form.get('action3') == 'Next Flashcard':
             #If user presses button to change to next flashcard
-            if Deck.__getFlashcardDeck().size() == 1:
+            if Deck.getFlashcardDeck().size() == 1:
                 #If there are is only one flashcard left in the stack
-                contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+                contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
                 actionName = 'question'
                 flash('You have reached the end of your reck',category='error')
-                return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+                return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
 
-            Deck.__useFlashcard()
+            Deck.useFlashcard()
             #If there are more then 1 flashcards in the stack
-            contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+            contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
             actionName = 'question'
-            return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+            return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
 
         if request.form.get('action2') == 'Previous Flashcard':
             #If user presses button to change to previous flashcard
-            if Deck.__getUsedFlashcards().size() == 0:
+            if Deck.getUsedFlashcards().size() == 0:
                 #If the used flashcards stack is empty then no flashcards have been used
-                contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+                contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
                 #Current question is redisplayed
                 actionName = 'question'
                 flash('You are already at the start of the deck',category='error')
-                return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+                return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
 
-            Deck.__undoFlashcardUse()
+            Deck.undoFlashcardUse()
             #If the user is not at the start of the deck
-            contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+            contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
             actionName = 'question'
-            return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+            return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
 
         if request.form.get('action4') == 'Shuffle Deck':
             #If the user presses button to shuffle deck
-            Deck.__shuffleDeck()
+            Deck.shuffleDeck()
             #The flashcard objects in the stack are shuffled
-            if Deck.__getFlashcardDeck().size() == 1:
+            if Deck.getFlashcardDeck().size() == 1:
                 #If there is only one flashcard left then shuffle function doesn't do anything
                 #Same flashcard question is redisplayed
-                contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+                contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
             else:
                 #If shuffle is successful then the next flashcard is displayed
-                Deck.__useFlashcard()
-                contentToDisplay = Deck.__peekFlashcardDeck().getQuestion()
+                Deck.useFlashcard()
+                contentToDisplay = Deck.peekFlashcardDeck().getQuestion()
 
             actionName = 'question'
-            return render_template('practiceFlashcards.html',user=current_user,DeckName=DeckName,ContentToDisplay=contentToDisplay,actionName=actionName)
+            return render_template('practiceFlashcards.html',user=current_user,deckName=deckName,ContentToDisplay=contentToDisplay,actionName=actionName)
 
 
 
@@ -243,7 +243,6 @@ def CreateNewSubdeck(DeckName):
         #Form details are recieved
         newFlashcard = Flashcard(0,question,answer,UserID)
         #Flashcard object is created so that keywords can be extracted
-        newFlashcard.__generateKeywords()
         keywords = newFlashcard.getKeywords()
         #keywords generated
 
@@ -283,6 +282,10 @@ def CreateNewDeck():
         mainDeckName = request.form.get('mainDeckName')
         subDeckName = request.form.get('SubDeckName')
         #Form details are recieved
+        if mainDeckName == '' or subDeckName == '':     #Ensures form is not blank
+            flash('Please fill out the form fully',category='error')
+            return render_template("createNewDeck.html",user=current_user)
+        
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
 
@@ -308,10 +311,14 @@ def CreateNewDeck():
 
         question = request.form.get('Question')
         answer = request.form.get('Answer')
+
+        if question == '' or answer == '':     #Ensures form is not blank
+            flash('Please fill out the form fully',category='error')
+            return render_template("createNewDeck.html",user=current_user)
+
         #Form data is recieved
         newFlashcard = Flashcard(0,question,answer,UserID)
         #Flashcard object is created so that keywords can be extracted
-        newFlashcard.__generateKeywords()
         keywords = newFlashcard.getKeywords()
         #Keywords generated
 
@@ -396,6 +403,9 @@ def chooseFlashcardDeckToManage(pageToDisplay):
 
     if request.method == 'POST':
         deckNameToManage = request.form.get('deckName')
+        if deckNameToManage == None:
+            flash('Please choose one of the options',category='error')
+            return render_template("chooseFlashcardDeckToManage.html", user=current_user,Decks=parentDecks,PageToDisplay=pageToDisplay,DeckToDisplay='Parent')
         #Form data recieved
         if request.form.get('ManageSubDecks') == 'Manage subdecks':
             #If user presses button to manage subdecks
@@ -414,9 +424,9 @@ def chooseFlashcardDeckToManage(pageToDisplay):
         if request.form.get('Choose') == 'Choose':
             #If the user chooses an flashcard deck
             if pageToDisplay == 'ManageFlashcards':
-                return redirect(url_for('flashcardsSection.manageFlashcards',DeckName=deckNameToManage))
+                return redirect(url_for('flashcardsSection.manageFlashcards',deckName=deckNameToManage))
             if pageToDisplay == 'PracticeFlashcards':
-                return redirect(url_for('flashcardsSection.PracticeFlashcards',DeckName=deckNameToManage))
+                return redirect(url_for('flashcardsSection.PracticeFlashcards',deckName=deckNameToManage))
             if pageToDisplay == 'TakeQuiz':
                 return redirect(url_for('quizSection.TakeQuiz',DeckName=deckNameToManage))
             #The same page is used to redirect to differnt pages
@@ -459,7 +469,7 @@ def manageFlashcards(deckName):
         
         if request.form.get('action2') == 'Add New Flashcards':
             #If the user presses the button to add new flashcards
-            return redirect(url_for('flashcardsSection.AddNewFlashcards',DeckName=deckName))
+            return redirect(url_for('flashcardsSection.AddNewFlashcards',deckName=deckName))
 
         if request.form.get('action3') == 'Delete Flashcards':
             #If the user presses the button to delete flashcards
@@ -540,7 +550,7 @@ def manageFlashcards(deckName):
 
         if request.form.get('action4') == 'Edit contents':
             #If the user presses the button to edit contents
-            return redirect(url_for('flashcardsSection.ChooseFlashcardToEdit',DeckName=deckName))
+            return redirect(url_for('flashcardsSection.ChooseFlashcardToEdit',deckName=deckName))
 
         if request.form.get('action5') == 'View flashcards':
             #If the user presses the button to view flashcards
@@ -603,9 +613,9 @@ def manageFlashcards(deckName):
 
                 connection.close()
                 flashcardIDsQuestionsAndAnswers = list(dict.fromkeys(flashcardIDsQuestionsAndAnswers))
-            return render_template('viewFlashcards.html', data=flashcardIDsQuestionsAndAnswers, user=current_user, count = len(flashcardIDsQuestionsAndAnswers), DeckName=deckName,isDeckAParentDeck=isDeckAParentDeck)
+            return render_template('viewFlashcards.html', data=flashcardIDsQuestionsAndAnswers, user=current_user, count = len(flashcardIDsQuestionsAndAnswers), DeckName=deckName,IsDeckAParentDeck=isDeckAParentDeck)
             #Flashcards associated with the deckname specified are displayed to the user
-    return render_template('manageFlashcards.html', user=current_user,DeckName=deckName,isDeckAParentDeck=isDeckAParentDeck)
+    return render_template('manageFlashcards.html', user=current_user,DeckName=deckName,IsDeckAParentDeck=isDeckAParentDeck)
 
 
 @flashcardsSection.route('/searchByQuestions/<DeckName>',  methods=['GET', 'POST'])
@@ -651,6 +661,22 @@ def DeleteFlashcards(DeckName):
         cursor.execute("SELECT FlashcardID FROM Flashcard WHERE FlashcardQuestion=?",(questionToDelete,))
         flashcardIDs = cursor.fetchall()
         #The flashcard ID of the flashcard question chosen is queried
+        removed =False
+        count = 0
+        while removed == False:
+            flashcardId = flashcardIDs[count]
+            cursor.execute("SELECT UserID FROM FlashcardsDecksAndUserIDs WHERE FlashcardID=?",(flashcardId[0],))
+            userWhoOwnsFlashcard = cursor.fetchall()
+            userWhoOwnsFlashcard = list(dict.fromkeys(userWhoOwnsFlashcard))
+
+            if UserID == str(userWhoOwnsFlashcard[0][0]):
+                cursor.execute("DELETE FROM FlashcardsDecksAndUserIDs WHERE UserID=? AND FlashcardID=?",(UserID,flashcardId[0],))
+                connection.commit()
+                flash('Flashcard removed ', category='success')
+                removed=True
+                #Flashcard is removed from the database
+            count+=1
+
 
         for flashcardId in flashcardIDs:
             cursor.execute("SELECT UserID FROM FlashcardsDecksAndUserIDs WHERE FlashcardID=?",(flashcardId[0],))
@@ -661,6 +687,8 @@ def DeleteFlashcards(DeckName):
                 connection.commit()
                 flash('Flashcard removed ', category='success')
                 #Flashcard is removed from the database
+
+
 
         connection.close()
         return render_template("deleteFlashcards.html",user=current_user,DeckName=DeckName)
@@ -687,18 +715,21 @@ def ChooseFlashcardToEdit(deckName):
         for flashcardId in flashcardIDs:
             cursor.execute("SELECT UserID FROM FlashcardsDecksAndUserIDs WHERE FlashcardID=?",(flashcardId[0],))
             userWhoOwnsFlashcard = cursor.fetchall()
+            userWhoOwnsFlashcard = list(dict.fromkeys(userWhoOwnsFlashcard))
+            #Duplicates are removed
 
-            if UserID == userWhoOwnsFlashcard[0][0]:
-                flashcardIdOfQuestion = flashcardId[0]
-                cursor.execute("SELECT FlashcardQuestion FROM Flashcard WHERE FlashcardID=?",(flashcardIdOfQuestion,))
-                question = cursor.fetchall()
+            if userWhoOwnsFlashcard!= []:#Not an empty array
+                if UserID == str(userWhoOwnsFlashcard[0][0]):
+                    flashcardIdOfQuestion = flashcardId[0]
+                    cursor.execute("SELECT FlashcardQuestion FROM Flashcard WHERE FlashcardID=?",(flashcardIdOfQuestion,))
+                    question = cursor.fetchall()
 
-                questionAndAnswer.append(question[0][0])
-                cursor.execute("SELECT FlashcardAnswer FROM Flashcard WHERE FlashcardID=?",(flashcardIdOfQuestion,))
-                answer = cursor.fetchall()
+                    questionAndAnswer.append(question[0][0])
+                    cursor.execute("SELECT FlashcardAnswer FROM Flashcard WHERE FlashcardID=?",(flashcardIdOfQuestion,))
+                    answer = cursor.fetchall()
 
-                questionAndAnswer.append(answer[0][0])
-                questionAndAnswer.append(flashcardIdOfQuestion)
+                    questionAndAnswer.append(answer[0][0])
+                    questionAndAnswer.append(flashcardIdOfQuestion)
 
         connection.close()
         #The user is redirected to a page to edit the contents of the flashcard chosen
@@ -722,7 +753,6 @@ def EditContent(deckName):
         #Form data is recieved
         updatedFlashcard = Flashcard(0,questionFromForm,answerFromForm,UserID)
         #Flashcard object created
-        updatedFlashcard.__generateKeywords()
         #Keywords are generated again as contents of the flashcard have changed
 
         flashcardQuestion = updatedFlashcard.getQuestion()
@@ -783,7 +813,6 @@ def AddNewFlashcards(deckName):
         #Form data recieved
         newFlashcard = Flashcard(0,question,answer,UserID)
         #Flashcard object created
-        newFlashcard.__generateKeywords()
         keywords = newFlashcard.getKeywords()
         #Keywords are generated as a new flashcard is being created
 
@@ -905,7 +934,7 @@ def changeFlashcardDeckName(DeckName):
                 #Database is updated with the new flashcard deck name
             connection.close()
 
-        return redirect(url_for('flashcardsSection.manageFlashcards',DeckName=newName))
+        return redirect(url_for('flashcardsSection.manageFlashcards',deckName=newName))
     
     return render_template('changeFlashcardDeckName.html',user=current_user,DeckName=DeckName)
 
@@ -921,6 +950,9 @@ def importFlashcards():
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
         deckNameToImport = request.form.get('deckName')
+        if deckNameToImport == None:
+            flash('Please choose one of the options',category='error')
+            return render_template("importFlashcards.html",user=current_user, flashcardDecks=flashcardDecks)
         #Form data is recieved - the deck name chosen to import
 
         cursor.execute("INSERT INTO ParentFlashcardDeck(FlashcardDeckName) values(?)",(deckNameToImport,))

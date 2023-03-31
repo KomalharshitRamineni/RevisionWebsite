@@ -52,6 +52,3 @@ def create_database(app): #Creates database by running sqlCode.py
         with app.app_context():
             with open("website/sqlCode.py", 'r') as file:
                 exec(file.read())
-
-
-

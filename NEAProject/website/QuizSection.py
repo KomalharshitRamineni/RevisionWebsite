@@ -51,9 +51,10 @@ def quizMenu():
             join = request.form.get("join", False)
             create = request.form.get("create", False)
             quizID = request.form.get("QuizID")
-            #Form data is recieved
             connection.close()
+            #Form data is recieved
             
+
             if join != False and not code:
                 #If user has not entered a code to join the quiz
                 flash("You have not entered a code for the Quiz")
@@ -68,14 +69,12 @@ def quizMenu():
             except:
                 create = True
             if create != False:
+
                 Users = [UserID]
                 room = generate_unique_code(4)
                 #Random quizroom code is generated
                 rooms[room] = {"members": 0, "messages": [],"QuizID":quizID,"Users":Users}
-            elif code not in rooms:
-                #Rooms dictionary is checked to see if quiz with code entered exists
-                flash("Quiz room with code dosen't exist",category='error')
-                return render_template("quizMenu.html",user=current_user, code=code)
+
        
             if room in rooms:
                 quizID = rooms[room].get("QuizID")
@@ -193,7 +192,7 @@ def multiplayScoreboarderQuiz():
         connection.close()
         #The names and scores of the users in the quiz room are returned
 
-        return render_template("ScoreBoard.html",userNamesAndScores=userNamesAndScores)
+        return render_template("ScoreBoard.html",UserNamesAndScores=userNamesAndScores)
     return 
 
 
@@ -379,7 +378,7 @@ def retakeQuiz(QuizID):
                 questions = questionsAndIDs
                 answers = answersAndIDs
 
-            return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
+            return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
 
         if questionType == 'MC':
             multipleChoiceAnswer = request.form.get('answer')
@@ -460,7 +459,7 @@ def retakeQuiz(QuizID):
                     questions = questionsAndIDs
                     answers = answersAndIDs
 
-                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
+                return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
             else:
                 flash('Inorrect',category='error')
 
@@ -473,10 +472,10 @@ def retakeQuiz(QuizID):
                 connection.commit()
                 connection.close()
                 #Database is updated with the user's score
-                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
+                return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
         if questionType == 'FB':
-            answer = request.form.get('answer')
+            answer = request.form.get('Answer')
             #Answer recieved from form
             if answer!=None:
                 if answer.lower() == correctAnswer:
@@ -554,7 +553,7 @@ def retakeQuiz(QuizID):
                         questions = questionsAndIDs
                         answers = answersAndIDs
 
-                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
+                    return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
                 else:
                     flash('Inorrect',category='error')
 
@@ -567,7 +566,7 @@ def retakeQuiz(QuizID):
                     connection.commit()
                     connection.close()
                     #Database is updated with new score
-                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
+                    return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
         if questionType == 'SM':
 
@@ -660,7 +659,7 @@ def retakeQuiz(QuizID):
                         questions = questionsAndIDs
                         answers = answersAndIDs
 
-                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
+                    return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
                 else:
                     flash('Inorrect',category='error')
                     connection = sqlite3.connect("database.db",check_same_thread=False)
@@ -674,7 +673,7 @@ def retakeQuiz(QuizID):
                     connection.close()
                     #Database is updated with new score
 
-                    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
+                    return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
         if questionType == 'QA':
 
@@ -755,7 +754,7 @@ def retakeQuiz(QuizID):
                     questions = questionsAndIDs
                     answers = answersAndIDs
 
-                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
+                return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
             
             else:
                 flash("incorrect",category='error')
@@ -769,9 +768,9 @@ def retakeQuiz(QuizID):
                 connection.close()
                 #Database is updated with new score
 
-                return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
+                return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)#if incorrect display correct answer and then go to next question
 
-    return render_template("retakeQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
+    return render_template("retakeQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID,user=current_user)
 
 
 
@@ -947,7 +946,7 @@ def multiplayerQuiz(QuizID):
                 questions = questionsAndIDs
                 answers = answersAndIDs
 
-            return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
+            return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
 
         if questionType == 'MC': 
             multipleChoiceAnswer = request.form.get('answer')
@@ -1017,13 +1016,13 @@ def multiplayerQuiz(QuizID):
                     questions = questionsAndIDs
                     answers = answersAndIDs
 
-                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
             else:
                 flash('Inorrect',category='error')
-                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
         if questionType == 'FB':
-            answer = request.form.get('answer')
+            answer = request.form.get('Answer')
             if answer!=None:
                 #If answer is not empty
                 if answer.lower() == correctAnswer:
@@ -1090,11 +1089,11 @@ def multiplayerQuiz(QuizID):
                         questions = questionsAndIDs
                         answers = answersAndIDs
 
-                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
                 else:
                     flash('Inorrect',category='error')
 
-                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
         if questionType == 'SM':
 
@@ -1176,10 +1175,10 @@ def multiplayerQuiz(QuizID):
                         questions = questionsAndIDs
                         answers = answersAndIDs
 
-                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
                 else:
                     flash('Inorrect',category='error')
-                    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake,QuizID=QuizID)#if incorrect display correct answer and then go to next question
+                    return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
         if questionType == 'QA':
 
@@ -1250,12 +1249,12 @@ def multiplayerQuiz(QuizID):
                     questions = questionsAndIDs
                     answers = answersAndIDs
 
-                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
             else:
 
-                return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
+                return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer,QuizID=QuizID)#if incorrect display correct answer and then go to next question
 
-    return render_template("multiplayerQuiz.html",QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
+    return render_template("multiplayerQuiz.html",QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer,QuizID=QuizID)
 
 
 
@@ -1263,7 +1262,7 @@ def multiplayerQuiz(QuizID):
 @login_required
 def quizMenchooseDeckToQuizOn():
     #Redirects to page which allow the user to choose the flashcard deck to take the quiz on
-    return redirect(url_for("flashcardsSection.chooseFlashcardDeckToManage",PageToDisplay='TakeQuiz'))
+    return redirect(url_for("flashcardsSection.chooseFlashcardDeckToManage",pageToDisplay='TakeQuiz'))
 
 
 
@@ -1306,7 +1305,7 @@ def TakeQuiz(DeckName):
             flash(f'The Maximum number of questions for the deck you have chosen is {numerOfFlashcards[0][0]}',category='error')
             return render_template("chooseQuizSize.html",user=current_user)
         
-        return redirect(url_for("quizSection.quiz",DeckName=DeckName,NumberOfQuestions=numberOfQuestions))
+        return redirect(url_for("quizSection.quiz",DeckName=DeckName,numberOfQuestions=numberOfQuestions))
 
     return render_template("chooseQuizSize.html",user=current_user)
 
@@ -1334,7 +1333,7 @@ def quiz(DeckName,numberOfQuestions):
         connection.commit()
         connection.close()
         #Database is updated with the details of the new quiz
-        currentQuestion = UserQuiz.__nextQuestion()
+        currentQuestion = UserQuiz.nextQuestion()
         questionType = currentQuestion.getQuestionType()
         correctAnswer = currentQuestion.getCorrectAnswer()
         questions = currentQuestion.getQuestion()
@@ -1369,10 +1368,10 @@ def quiz(DeckName,numberOfQuestions):
             if UserAndQuizObject[0]==UserID:    #If the quiz object that belongs to the use is returned
                 UserQuiz = UserAndQuizObject[1]
 
-        if UserQuiz.__getCompletedQuestions().size() == 0:
+        if UserQuiz.getCompletedQuestions().size() == 0:
             currentQuestion = UserQuiz.getQuestions().peek()
         else:
-            currentQuestion = UserQuiz.__getCompletedQuestions().peek()
+            currentQuestion = UserQuiz.getCompletedQuestions().peek()
 
         questionType = currentQuestion.getQuestionType()
         questions = currentQuestion.getQuestion()
@@ -1380,8 +1379,8 @@ def quiz(DeckName,numberOfQuestions):
         correctAnswer = currentQuestion.getCorrectAnswer()
         #Next question and answer is returned
         
-        if request.form.get('__nextQuestion') == 'Next Question':
-            if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
+        if request.form.get('NextQuestion') == 'Next Question':
+            if UserQuiz.getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                 count=0
                 QuizID = None
                 for UserAndQuizObject in userAndQuizObjects:
@@ -1392,7 +1391,7 @@ def quiz(DeckName,numberOfQuestions):
                 return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
                 #Display results to the user
 
-            currentQuestion = UserQuiz.__nextQuestion()
+            currentQuestion = UserQuiz.nextQuestion()
             questionType = currentQuestion.getQuestionType()
             questions = currentQuestion.getQuestion()
             answers = currentQuestion.getAnswer()
@@ -1421,7 +1420,7 @@ def quiz(DeckName,numberOfQuestions):
                 questions = questionsAndIDs
                 answers = answersAndIDs
 
-            return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
+            return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
 
         if questionType == 'MC':
             multipleChoiceAnswer = request.form.get('answer')
@@ -1446,7 +1445,7 @@ def quiz(DeckName,numberOfQuestions):
 
                     connection.close()
 
-                    if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
+                    if UserQuiz.getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                         count=0
                         QuizID = None
                         for UserAndQuizObject in userAndQuizObjects:
@@ -1457,7 +1456,7 @@ def quiz(DeckName,numberOfQuestions):
                         return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
                         #Display results to the user
 
-                    currentQuestion = UserQuiz.__nextQuestion()
+                    currentQuestion = UserQuiz.nextQuestion()
                     questionType = currentQuestion.getQuestionType()
                     questions = currentQuestion.getQuestion()
                     answers = currentQuestion.getAnswer()
@@ -1487,7 +1486,7 @@ def quiz(DeckName,numberOfQuestions):
                         questions = questionsAndIDs
                         answers = answersAndIDs
 
-                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
                 else:
                     flash('Inorrect',category='error')
 
@@ -1501,10 +1500,10 @@ def quiz(DeckName,numberOfQuestions):
                     connection.commit()
                     connection.close()
 
-                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
 
         if questionType == 'FB':
-            answer = request.form.get('answer')
+            answer = request.form.get('Answer')
             if answer!=None:
                 if answer.lower() == correctAnswer:
                     flash('Correct',category='success')
@@ -1526,7 +1525,7 @@ def quiz(DeckName,numberOfQuestions):
 
                     connection.close()
 
-                    if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
+                    if UserQuiz.getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                         count=0
                         QuizID = None
                         for UserAndQuizObject in userAndQuizObjects:
@@ -1537,7 +1536,7 @@ def quiz(DeckName,numberOfQuestions):
                         return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
                         #Display results to the user
 
-                    currentQuestion = UserQuiz.__nextQuestion()
+                    currentQuestion = UserQuiz.nextQuestion()
                     questionType = currentQuestion.getQuestionType()
                     questions = currentQuestion.getQuestion()
                     answers = currentQuestion.getAnswer()
@@ -1567,7 +1566,7 @@ def quiz(DeckName,numberOfQuestions):
                         questions = questionsAndIDs
                         answers = answersAndIDs
 
-                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
                 else:
                     flash('Inorrect',category='error')
 
@@ -1581,7 +1580,7 @@ def quiz(DeckName,numberOfQuestions):
                     connection.commit()
                     connection.close()
 
-                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
 
         if questionType == 'SM':
 
@@ -1617,7 +1616,7 @@ def quiz(DeckName,numberOfQuestions):
 
                     connection.close()
 
-                    if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
+                    if UserQuiz.getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                         count=0
                         QuizID = None
                         for UserAndQuizObject in userAndQuizObjects:
@@ -1628,7 +1627,7 @@ def quiz(DeckName,numberOfQuestions):
                         return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
                         #Display results to the user
 
-                    currentQuestion = UserQuiz.__nextQuestion()
+                    currentQuestion = UserQuiz.nextQuestion()
                     questionType = currentQuestion.getQuestionType()
                     questions = currentQuestion.getQuestion()
                     answers = currentQuestion.getAnswer()
@@ -1658,7 +1657,7 @@ def quiz(DeckName,numberOfQuestions):
                         questions = questionsAndIDs
                         answers = answersAndIDs
 
-                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
                 else:
                     flash('Inorrect',category='error')
 
@@ -1671,7 +1670,7 @@ def quiz(DeckName,numberOfQuestions):
                     cursor.execute("UPDATE Question SET NumberOfTimesAnswered=? WHERE QuestionID=?",(int(questionInfo[0][0])+1,str(currentQuestion.getQuestionID()),))
                     connection.commit()
                     connection.close()
-                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake)#if incorrect display correct answer and then go to next question
+                    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswerToMistake)#if incorrect display correct answer and then go to next question
 
         if questionType == 'QA':
 
@@ -1695,7 +1694,7 @@ def quiz(DeckName,numberOfQuestions):
 
                 connection.close()
 
-                if UserQuiz.__getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
+                if UserQuiz.getQuestions().size() == 0:   #If all questions have been used (Quiz finished)
                     count=0
                     QuizID = None
                     for UserAndQuizObject in userAndQuizObjects:
@@ -1706,7 +1705,7 @@ def quiz(DeckName,numberOfQuestions):
                     return redirect(url_for("quizSection.viewResults",QuizID=QuizID))
                     #Display results to the user
 
-                currentQuestion = UserQuiz.__nextQuestion()
+                currentQuestion = UserQuiz.nextQuestion()
                 questionType = currentQuestion.getQuestionType()
                 questions = currentQuestion.getQuestion()
                 answers = currentQuestion.getAnswer()
@@ -1736,7 +1735,7 @@ def quiz(DeckName,numberOfQuestions):
                     questions = questionsAndIDs
                     answers = answersAndIDs
 
-                return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
+                return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
             
             else:
                 flash('Inorrect',category='error')
@@ -1751,9 +1750,9 @@ def quiz(DeckName,numberOfQuestions):
                 connection.commit()
                 connection.close()
 
-                return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
+                return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=True,CorrectAnswer=correctAnswer)#if incorrect display correct answer and then go to next question
 
-    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,questions=questions,answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
+    return render_template("singlePlayerQuiz.html",user=current_user,QuestionType=questionType,Questions=questions,Answers=answers,DisplayCorrectAnswer=False,CorrectAnswer=correctAnswer)
 
 
 

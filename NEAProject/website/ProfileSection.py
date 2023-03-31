@@ -28,10 +28,6 @@ def Profile():
         if request.form.get('ChangeName') == 'Change Name':
             return redirect(url_for('profileSection.changeName'))
             #If the button to change name is pressed the user is redirected to the corresponding page
-        
-        # if request.form.get('ViewFeedback') == 'View Feedback':
-        #     return redirect(url_for('profileSection.ViewFeedback'))
-        #     #If the button to change name is pressed the user is redirected to the corresponding page
 
         if request.form.get('ChangeEmail') == 'Change Email':
             #If the button to change email is pressed the user is sent an email
@@ -41,6 +37,7 @@ def Profile():
                 mail = Mail(current_app)
                 msg = Message('Change Email Link', recipients=[userDetails[0][0]])
                 link = url_for('profileSection.confirm_change_email',token=token,_external=True)
+                print(link)
                 msg.body = 'Your link is {}'.format(link)
                 mail.send(msg)
                 #The link to change email is emailed to the user
@@ -48,12 +45,12 @@ def Profile():
 
         if request.form.get('ChangePassword') == 'Change Password':
             #If the button to change password is pressed the user is sent an email
-            token = s.dumps(userDetails[0][0],salt='email-confirm')
+            token = s.dumps(userDetails[0][0],salt='change-password')
 
             with current_app.app_context():
                 mail = Mail(current_app)
                 msg = Message('Change Password Link', recipients=[userDetails[0][0]])
-                link = url_for('profileSection.confirm_change_password',token=token,_external=True)
+                link = url_for('profileSection.confirm_change_password_profile',token=token,_external=True)
                 msg.body = 'Your link is {}'.format(link)
                 mail.send(msg)
                 #The link to change password is emailed to the user
@@ -63,12 +60,12 @@ def Profile():
     #profile page is displayed unless an post requests are made
 
 
-@profileSection.route('/confirm_change_password/<token>', methods=['GET', 'POST'])
+@profileSection.route('/confirm_change_password_profile/<token>', methods=['GET', 'POST'])
 @login_required
-def confirm_change_password(token):
+def confirm_change_password_profile(token):
     #This page is redirected to when the user accessed the link to change password
     try:
-        email = s.loads(token, salt='email-confirm', max_age=300)
+        email = s.loads(token, salt='change-password', max_age=300)
         return redirect(url_for("profileSection.changePassword"))
         #If the link was accessed within the time frame then the user is redirected to the page to change password
 
@@ -132,7 +129,11 @@ def changeName():
     UserID = current_user.get_id()
     if request.method == 'POST':
         newName = request.form.get('name')
-        #Data is recieved from the form
+
+        if newName == '':
+            flash('Please enter a name',category='error')
+            return render_template('changeUserName.html',user=current_user)
+            
 
         connection = sqlite3.connect("database.db",check_same_thread=False)
         cursor = connection.cursor()
@@ -236,6 +237,9 @@ def changeEmail():
     if request.method == 'POST':
 
         email = request.form.get('email')
+        if email == '':
+            flash('You have not entered an email', category='error')
+            return render_template('changeUserEmail.html',user=current_user)
         #Form data recieved
 
         connection = sqlite3.connect("database.db",check_same_thread=False)

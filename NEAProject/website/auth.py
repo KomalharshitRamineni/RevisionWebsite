@@ -5,7 +5,6 @@ from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Mail,Message
 from itsdangerous import URLSafeTimedSerializer
 import sqlite3
-from .models import User
 
 auth = Blueprint('auth', __name__)
 
@@ -18,7 +17,6 @@ def welcome():
         return render_template("welcomePage.html",user=None)
     else:
         #If the user lands on this page and is logged in then they are logged out
-        logout_user()
         return render_template("welcomePage.html",user=None)
 
 
@@ -51,10 +49,10 @@ def login():
                 else:
 
                     with current_app.app_context():
-                        token = s.dumps(email,salt='email-confirm')
+                        token = s.dumps(email,salt='change-password')
                         mail = Mail(current_app)
                         msg = Message('Change Password Link', recipients=[email])
-                        link = url_for('profileSection.confirm_change_password',token=token,_external=True)
+                        link = url_for('auth.confirm_change_password',token=token,_external=True)
                         msg.body = 'Your link is {}'.format(link)
                         mail.send(msg)
                         #If an account does exist with the email entered then a link to reset password is sent to their email
@@ -169,10 +167,12 @@ def login():
                 emailConfirmed = userDetails[0][3]
 
                 connection.close()
+                print('\n\n\n')
+                print(actualPassword)
 
-                if check_password_hash(actualPassword[0][0],password):
+                if check_password_hash(actualPassword,password):
                     #Unhash password from database and compare with password entered
-                    if emailConfirmed[0][0] == 1:
+                    if emailConfirmed == 1:
                         #If email is already verified then an error message is displayed
                         flash('This email is already verified', category='error')
                     else:
@@ -238,7 +238,7 @@ def confirm_email(token):
 def confirm_change_password(token):
     try:
         #If link is accessed within the time limit
-        email = s.loads(token, salt='email-confirm', max_age=300)
+        email = s.loads(token, salt='change-password', max_age=300)
         return redirect(url_for("auth.changePassword",email=email))
         #User is redirected to page to change their password
     except:

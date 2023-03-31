@@ -1,6 +1,13 @@
 from website import create_app, quizSection
 from flask import session
 from flask_socketio import join_room, leave_room,send,SocketIO
+import socket
+
+## getting the hostname by socket.gethostname() method
+hostname = socket.gethostname()
+## getting the IP address using socket.gethostbyname() method
+ip_address = socket.gethostbyname(hostname)
+
 
 rooms = quizSection.rooms # rooms dictionary is imported from different file as it is a global variable
 
@@ -50,6 +57,6 @@ def disconnect():
     send({"name": name, "message": "has left the room"}, to=room)
 
 if __name__ == '__main__':
-    socketio.run(app,debug=True) 
+    socketio.run(app,host=ip_address,debug=True) 
 
     

@@ -31,20 +31,22 @@ class Flashcard():
         self.__answer = answer
         self.__keywords =  ''
         self.__possibleQuestionTypes = ['MC','FB','QA','SM']
+        if self.__keywords == '':
+            self.__generateKeywords()
         #Question type : MC - Multiple choice
         #Question type : FB - Fill in the blanks
         #Question type : QA - Match question to answer
         #Question type : SM - Spot the mistake
         
 
-    def __setKeywords(self,Keywords):
+    def setKeywords(self,Keywords):
         self.__keywords = Keywords
         #If flashcard already has keywords then it can be used by passing them in as a parameter
 
     def __generateKeywords(self):
         #If flashcard does not have any keywords existing the they can be generated
         Keywords = generateKeywords(self.__question,self.__answer)
-        self.__setKeywords(Keywords)
+        self.setKeywords(Keywords)
         
     def getQuestion(self):
         return self.__question
@@ -57,7 +59,7 @@ class Flashcard():
     def getFlashcardID(self):
         return self.___flashcardID
 
-    def __setPossibleQuestionTypes(self):
+    def setPossibleQuestionTypes(self):
         #The different types of questions are restriced by number of flashcards which are similar to the current one
         
         string = self.__keywords
@@ -127,28 +129,6 @@ class Flashcard():
         if len(matchingFlashCards) <=3:
             #If there are less than 3 matching flashcards the MC question type is removed from the possible question types
             self.__possibleQuestionTypes.remove('MC')
-
-        # matchingFlashCards=[]
-
-        # for flashcardIDAndKeywords in flashcardIDsAndKeywords:
-        #     matchCount=0
-        #     for x in self.__keywords.split():
-        #         if x in flashcardIDAndKeywords[1]:
-        #             matchCount=+1
-
-        #     if flashcardIDAndKeywords[1] != self.__keywords:
-        #         matchingFlashCards.append((flashcardIDAndKeywords,matchCount))
-
-        # for x in reversed(range(len(matchingFlashCards))):
-
-
-        #     string = matchingFlashCards[x][0][1]
-        #     string = string.replace(' ','')
-        #     if string.isnumeric() == True or matchingFlashCards[x][1] == 0:
-        #         matchingFlashCards.pop(x)
-
-        # matchingFlashCards = list(dict.fromkeys(matchingFlashCards))
-        # matchingFlashCards = merge_sort_by_index(matchingFlashCards,1,False)
 
         if len(matchingFlashCards) <=1:
             #If there are less than 2 matching flashcards then the questiont type QA is removed from the question types
@@ -224,33 +204,33 @@ class FlashcardDeck:
         self.__flashcardDeck = Stack() #Composition relationship
         self.__usedFlashcards = Stack() 
 
-    def __addToFlashcardDeck(self,flashcard):
+    def addToFlashcardDeck(self,flashcard):
         self.__flashcardDeck.push(flashcard)
 
-    def __getFlashcardDeck(self):
+    def getFlashcardDeck(self):
         return self.__flashcardDeck
 
-    def __addToUsedFlashcards(self,flashcard):
+    def addToUsedFlashcards(self,flashcard):
         self.__usedFlashcards.push(flashcard)
 
-    def __getUsedFlashcards(self):
+    def getUsedFlashcards(self):
         return self.__usedFlashcards
     
-    def __useFlashcard(self):#This function gets the next flashcard and moves it to the used flashcards stack
+    def useFlashcard(self):#This function gets the next flashcard and moves it to the used flashcards stack
         flashcard = self.__flashcardDeck.pop()
-        self.__addToUsedFlashcards(flashcard=flashcard)
+        self.addToUsedFlashcards(flashcard=flashcard)
         return flashcard
 
-    def __undoFlashcardUse(self):#this function removes the flashcard from the used stack and pushes it onto flashcards stack
+    def undoFlashcardUse(self):#this function removes the flashcard from the used stack and pushes it onto flashcards stack
         flashcard = self.__usedFlashcards.pop()
-        self.__addToFlashcardDeck(flashcard=flashcard)
+        self.addToFlashcardDeck(flashcard=flashcard)
 
-    def __peekFlashcardDeck(self):
+    def peekFlashcardDeck(self):
         return self.__flashcardDeck.peek()#Returns top item in flashcard stack
-    def __peekUsedFlashcards(self):
+    def peekUsedFlashcards(self):
         return self.__usedFlashcards.peek()#Returns top item in used flashcards stack
 
-    def __shuffleDeck(self):
+    def shuffleDeck(self):
         self.__flashcardDeck.shuffle()#items in stack are shuffled randomly
 
 
@@ -265,7 +245,7 @@ class Quiz():
         self.__userID = UserID
         self.__createQuiz()
         
-    def __getQuizID(self):
+    def getQuizID(self):
         return self.__quizID
 
     def __setQuizID(self):
@@ -279,16 +259,16 @@ class Quiz():
         nextQuizID = int(numberOfQuizIDs[0][0]) + 1
         return nextQuizID
 
-    def __nextQuestion(self):
+    def nextQuestion(self):
         completedQuestion = self.__questions.pop()
         self.__completedQuestions.push(completedQuestion)
         #Next question is removed from questions stack and pushed onto completed questions stack
         return completedQuestion
-    def __previewNextQuestion(self):
+    def previewNextQuestion(self):
         return self.__questions.peek()
-    def __getQuestions(self):
+    def getQuestions(self):
         return self.__questions
-    def __getCompletedQuestions(self):
+    def getCompletedQuestions(self):
         return self.__completedQuestions
     
     def __returnFlashcardIds(self):
@@ -350,9 +330,9 @@ class Quiz():
             #Query returs the details of a flashcard given the flashcardID
 
             flashcardObject = Flashcard(flashcardID[0],questionAnswerAndKeywords[0][0],questionAnswerAndKeywords[0][1],self.__userID)
-            flashcardObject.__setKeywords(questionAnswerAndKeywords[0][2])
+            flashcardObject.setKeywords(questionAnswerAndKeywords[0][2])
             #flashcard object is created and the keywords are set
-            flashcardObject.__setPossibleQuestionTypes()
+            flashcardObject.setPossibleQuestionTypes()
             #The possible question types for the flashcard are calculated
             questionTypes = flashcardObject.getPossibleQuestionTypes()
             #The possible question types are retuned
@@ -393,18 +373,18 @@ class Quiz():
                     #If the question that has been generated already exists in the database then the one stored in the database needs to be used instead
 
             if questionAlreadyExists == True:
-                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.__getQuizID(),questionIdOfDuplicateQuestion,))
+                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.getQuizID(),questionIdOfDuplicateQuestion,))
                 connection.commit()
-                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.__userID,self.__getQuizID(),))
+                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.__userID,self.getQuizID(),))
                 connection.commit()
                 #If question already exists in the database then the Question table is not updated
             else:
                 #If the question created is new however, the Question table is updated
                 cursor.execute("INSERT INTO Question(QuestionID,NumberOfTimesAnswered,NumberOfTimesAnsweredCorrectly,QuestionType,Question,Answer,CorrectAnswer,FlashcardID) values(?,?,?,?,?,?,?,?)",(quizQuestionObject.getQuestionID(),0,0,quizQuestionObject.getQuestionType(),str(quizQuestionObject.getQuestion()),str(quizQuestionObject.getAnswer()),str(quizQuestionObject.getCorrectAnswer()),flashcardObject.getFlashcardID(),))
                 connection.commit()
-                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.__getQuizID(),quizQuestionObject.getQuestionID(),))
+                cursor.execute("INSERT INTO QuizQuestions(QuizID,QuestionID) values(?,?)",(self.getQuizID(),quizQuestionObject.getQuestionID(),))
                 connection.commit()
-                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.__userID,self.__getQuizID(),))
+                cursor.execute("INSERT INTO PastQuiz(UserID,QuizID) values(?,?)",(self.__userID,self.getQuizID(),))
                 connection.commit()
 
         connection.close()
