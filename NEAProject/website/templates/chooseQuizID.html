@@ -1,0 +1,23 @@
+{% extends "base.html" %} {% block title %}Quiz{% endblock %} {% block
+content %}
+
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <h3>Choose QuizID</h3>
+    <form method="post" class="form-inline">
+      <div class="row g-3 align-items-center">
+        <div class="col-auto">
+          <input type="number" name="QuizID" class="form-control" />
+        </div>
+        <div class="col-auto">
+      <button type="submit" name="create" class="btn btn-lg btn-blue">
+        Retake Quiz
+      </button>
+        </div>
+    </form>
+  </div>
+  <div class="col-2"></div>
+</div>
+
+{% endblock %}

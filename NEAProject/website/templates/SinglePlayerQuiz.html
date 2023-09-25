@@ -1,0 +1,510 @@
+{% extends "base.html" %} {% block title %}Quiz{% endblock %} {% block content
+%} {% if DisplayCorrectAnswer == False %} {% if QuestionType == 'MC' %}
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <div class="quiz-box">
+      <div class="card">
+        <p
+          class="card-header bg-primary text-wrap p-3"
+          style="color: #e4e7e9; font-size: larger"
+        >
+          {{Questions}}
+        </p>
+        <form method="post" id="test-form">
+          <div class="card-body quiz-body">
+            <div class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="answer"
+                name="answer"
+                value="{{Answers[0]}}"
+              />
+              <label class="form-check-label" for="flexRadioDefault0">
+                {{Answers[0]}}
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="answer"
+                name="answer"
+                value="{{Answers[1]}}"
+              />
+              <label class="form-check-label" for="flexRadioDefault1">
+                {{Answers[1]}}
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="answer"
+                name="answer"
+                value="{{Answers[2]}}"
+              />
+              <label class="form-check-label" for="flexRadioDefault2">
+                {{Answers[2]}}
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="radio"
+                id="answer"
+                name="answer"
+                value="{{Answers[3]}}"
+              />
+              <label class="form-check-label" for="flexRadioDefault3">
+                {{Answers[3]}}
+              </label>
+            </div>
+          </div>
+          <div class="card-footer text-center">
+            <input
+              class="btn btn-primary btn-blue"
+              name="Choose"
+              type="submit"
+              value="Submit"
+            />
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-2"></div>
+</div>
+
+{% endif %} {% if QuestionType == 'FB' %}
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <div class="quiz-box">
+      <div class="card">
+        <div
+          class="card-header bg-primary text-wrap p-3"
+          style="color: #e4e7e9; font-size: larger"
+        >
+          <p>{{Questions}}</p>
+        </div>
+        <div class="card-body">
+          <p>{{Answers}}</p>
+        </div>
+        <div class="card-footer">
+          <form method="POST" id="test-form">
+            <h3 class="text-center mb-3">Enter Answer</h3>
+            <div class="form-group">
+              <label for="Answer" class="form-label">Answer</label>
+              <input
+                type="text"
+                class="form-control"
+                id="Answer"
+                name="Answer"
+                placeholder="Enter Answer"
+              />
+            </div>
+
+            <br />
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary btn-blue">
+                Submit
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-2"></div>
+</div>
+
+{% endif %} {% if QuestionType == 'QA' %}
+
+<script>
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+  }
+
+  function drop(ev) {
+    ev.preventDefault();
+    var data = ev.dataTransfer.getData("text");
+    if (ev.target.childNodes.length == 0) {
+      ev.target.appendChild(document.getElementById(data));
+    }
+  }
+  function getValues() {
+    $(".drop-section").each(function () {
+      var dropedValue = $(this).find("span");
+      var inputValue = $(this).siblings(".form-val");
+      var innerDivId = $(this).attr("id");
+
+      var valToForm = dropedValue.attr("id");
+      var formValue = valToForm.replace("drag", "");
+      inputValue.val(formValue);
+    });
+  }
+  function resetAnswerPad() {
+    var container = document.getElementById("drag-container");
+    container.innerHTML = html;
+    $(".drop-section").find("span").remove();
+  }
+  var html;
+  window.onload = function () {
+    html = document.getElementById("drag-container").innerHTML;
+  };
+</script>
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <form method="post" id="test-form">
+      <div class="quiz-box">
+        <div class="card p-2">
+          <div class="row text-center">
+            <div class="col">
+              <a class="btn btn-secondary" href="#" onclick="resetAnswerPad()"
+                >Retry</a
+              >
+              <button
+                type="submit"
+                onclick="getValues()"
+                class="btn btn-primary btn-blue"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-12">
+              <div class="card mb-3" style="max-width: 700px">
+                <div class="row no-gutters">
+                  <div class="col-md-4">
+                    <div id="q1" class="question">
+                      <p>{{Questions[0][1]}}</p>
+                    </div>
+                  </div>
+                  <div
+                    class="col-md-8"
+                    style="background-color: rgb(217, 220, 219)"
+                  >
+                    <div class="card-body">
+                      <div
+                        id="div1"
+                        ondrop="drop(event)"
+                        ondragover="allowDrop(event)"
+                        class="drop-section"
+                      ></div>
+                      <input
+                        type="hidden"
+                        name="Box{{Questions[0][0]}}"
+                        id="{{Questions[0][0]}}"
+                        class="form-val"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="card mb-3" style="max-width: 700px">
+                <div class="row no-gutters">
+                  <div class="col-md-4">
+                    <div id="q2" class="question">
+                      <p>{{Questions[1][1]}}</p>
+                    </div>
+                  </div>
+                  <div
+                    class="col-md-8"
+                    style="background-color: rgb(217, 220, 219)"
+                  >
+                    <div class="card-body">
+                      <div
+                        id="div2"
+                        ondrop="drop(event)"
+                        ondragover="allowDrop(event)"
+                        class="drop-section"
+                      ></div>
+                      <input
+                        type="hidden"
+                        name="Box{{Questions[1][0]}}"
+                        id="{{Questions[1][0]}}"
+                        class="form-val"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="card mb-3" style="max-width: 700px">
+                <div class="row no-gutters">
+                  <div class="col-md-4">
+                    <div id="q3" class="question">
+                      <p>{{Questions[2][1]}}</p>
+                    </div>
+                  </div>
+                  <div
+                    class="col-md-8"
+                    style="background-color: rgb(217, 220, 219)"
+                  >
+                    <div class="card-body">
+                      <div
+                        id="div3"
+                        ondrop="drop(event)"
+                        ondragover="allowDrop(event)"
+                        class="drop-section"
+                      ></div>
+                      <input
+                        type="hidden"
+                        name="Box{{Questions[2][0]}}"
+                        id="{{Questions[2][0]}}"
+                        class="form-val"
+                        value=""
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="drag-container" class="col-12">
+              <h5>Drag the answers from this rectangle:</h5>
+              <div class="row">
+                <div class="col">
+                  <div class="drag-section mb-3">
+                    <span
+                      id="drag{{Answers[0][0]}}"
+                      draggable="true"
+                      ondragstart="drag(event)"
+                      >{{Answers[0][1]}}</span
+                    >
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="drag-section mb-3">
+                    <span
+                      id="drag{{Answers[1][0]}}"
+                      draggable="true"
+                      ondragstart="drag(event)"
+                      >{{Answers[1][1]}}</span
+                    >
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="drag-section mb-3">
+                    <span
+                      id="drag{{Answers[2][0]}}"
+                      draggable="true"
+                      ondragstart="drag(event)"
+                      >{{Answers[2][1]}}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="col-2"></div>
+</div>
+
+{% endif %} {% if QuestionType == 'SM' %}
+<script>
+  $(document).ready(function () {
+    $("span").click(function (event) {
+      event.stopPropagation();
+      changeBackGroundOnClick();
+      $(this).addClass("back-color");
+      let spanVal = $(this).text();
+      $("#answered").val(spanVal);
+    });
+  });
+  function changeBackGroundOnClick() {
+    $("#answer-section span").removeClass("back-color");
+  }
+</script>
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <div class="quiz-box">
+      <form method="post" id="test-form">
+        <div class="card">
+          <div
+            class="card-header bg-primary text-wrap p-3"
+            style="color: #e4e7e9; font-size: larger"
+          >
+            <p>{{Questions}}</p>
+          </div>
+          <div class="card-body">
+            <div id="answer-section">
+              {% for x in Answers.split() %}
+              <span class="pointer-type">{{x}}</span>
+              {% endfor %}
+            </div>
+            <input id="answered" name="incorrectWord" type="hidden" value="" />
+          </div>
+          <div class="card-footer">
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary btn-blue">
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-2"></div>
+</div>
+{% endif %} {% endif %} {% if DisplayCorrectAnswer == True %} {% if QuestionType
+== 'MC' %}
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <div class="quiz-box">
+      <form method="post">
+        <div class="card">
+          <div
+            class="card-header bg-primary text-wrap p-3"
+            style="color: #e4e7e9; font-size: larger"
+          >
+            <p>{{Questions}}</p>
+          </div>
+          <div class="card-body">
+            <p>{{CorrectAnswer}}</p>
+          </div>
+          <div class="card-footer">
+            <div class="text-center">
+              <input
+                type="submit"
+                value="Next Question"
+                name="NextQuestion"
+                class="btn btn-primary btn-blue"
+              />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-2"></div>
+</div>
+{% endif %} {% if QuestionType == 'FB' %}
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <div class="quiz-box">
+      <form method="post">
+        <div class="card">
+          <div
+            class="card-header bg-primary text-wrap p-3"
+            style="color: #e4e7e9; font-size: larger"
+          >
+            <p>{{Answers}}</p>
+          </div>
+          <div class="card-body">
+            <p>{{CorrectAnswer}}</p>
+          </div>
+          <div class="card-footer">
+            <div class="text-center">
+              <input
+                type="submit"
+                value="Next Question"
+                name="NextQuestion"
+                class="btn btn-primary btn-blue"
+              />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-2"></div>
+</div>
+{% endif %} {% if QuestionType == 'SM' %}
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <div class="quiz-box">
+      <form method="post">
+        <div class="card">
+          <div
+            class="card-header bg-primary text-wrap p-3"
+            style="color: #e4e7e9; font-size: larger"
+          >
+            <p>{{Answers}}</p>
+          </div>
+          <div class="card-body">
+            <p>{{CorrectAnswer}}</p>
+          </div>
+          <div class="card-footer">
+            <div class="text-center">
+              <input
+                type="submit"
+                value="Next Question"
+                name="NextQuestion"
+                class="btn btn-primary btn-blue"
+              />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-2"></div>
+</div>
+{% endif %} {% if QuestionType == 'QA' %}
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <form method="post" id="test-form">
+      <div class="card">
+        <h5 class="card-header">Answer</h5>
+        <div class="card-body">
+          {% for key,value in CorrectAnswer.items() %}
+          <div class="row">
+            <div class="col">
+              <div class="row">
+                <div id="question-container" class="col">
+                  <div class="row">
+                    <div class="col mb-3">
+                      <div id="q1" class="question">
+                        <h5>Question:</h5>
+                        <p>{{key}}</p>
+                      </div>
+                    </div>
+                    <div class="col mb-3">
+                      <div id="div1" class="drop-section">{{value}}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          <input type="hidden" value="True" name="DisplayAnswer" />
+          <div class="text-center">
+            <input
+              type="submit"
+              value="Next Question"
+              name="NextQuestion"
+              class="btn btn-primary btn-blue"
+            />
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="col-2"></div>
+</div>
+
+{% endif %} {% endif %} {% endblock %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %} {% block title %}Current name: {{DeckName}}{% endblock
 %} {% block content %}
-<form method="POST" style="color: #767c7c">
-  <h3 align="center">Add new flashcard</h3>
+<form method="POST">
+  <h3 class="text-center mb-3">Add new flashcard</h3>
   <div class="form-group">
     <label for="Question">Question</label>
     <input
@@ -24,13 +24,7 @@
   </div>
 
   <br />
-  <button
-    type="submit"
-    class="btn btn-primary"
-    style="background-color: #767c7c; color: #e4e7e9"
-  >
-    Add Flashcard
-  </button>
+  <button type="submit" class="btn btn-primary">Add Flashcard</button>
 </form>
 
 {% endblock %}

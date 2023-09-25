@@ -1,0 +1,30 @@
+{% for x in feedback %} {% if x[0] == None or x[1] == None%} {% if x[0] ==
+None%}
+<p class="m-2 font-weight-bold">
+  Not enough data available for deck: {{x[1][0][0]}}
+</p>
+{% else %}
+<p class="m-2 font-weight-bold">
+  Not enough data available for deck: {{x[0][0][0]}}
+</p>
+{% endif %} {% else %}
+<table>
+  <tr>
+    <td>Stats for:</td>
+    <td>{{x[0][0][0]}}</td>
+  </tr>
+  <tr>
+    <td>Best topic:</td>
+    <td>{{x[0][0][1][3]}}</td>
+  </tr>
+  <tr>
+    <td>Worst Topic:</td>
+    <td>{{x[1][0][1][3]}}</td>
+  </tr>
+  <tr>
+    <td>Suggested Quiz Retake:</td>
+    <td>Quiz with QuizID {{x[1][0][1][0]}}</td>
+  </tr>
+</table>
+
+{% endif %} {% endfor %}

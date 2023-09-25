@@ -1,0 +1,259 @@
+body {
+  margin: 0;
+  background-color: #e4e7e9;
+}
+a:hover {
+  font-weight: bolder;
+}
+
+.grey-back {
+  background-color: #4d4dff;
+  color: white;
+}
+
+.container {
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.draggable {
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid black;
+  cursor: move;
+}
+
+.draggable.dragging {
+  opacity: 0.5;
+}
+.btn-blue {
+  background-color: #4d4dff;
+  color: white;
+}
+.pointer-type {
+  cursor: pointer;
+}
+.question,
+.drop-section {
+  /* min-width: 150px; */
+  min-height: 100px;
+
+  /* border: 1px solid #0b0b76; */
+}
+.drag-section {
+  min-width: 150px;
+  min-height: 100px;
+}
+.anchor-button {
+  background: none !important;
+  border: none;
+  padding: 0 !important;
+  /*optional*/
+  font-family: arial, sans-serif;
+  /*input has OS specific font-family*/
+  color: #069;
+  cursor: pointer;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-box {
+  border-color: black;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 10px;
+  background-color: whitesmoke;
+  height: 40vh;
+  display: flex;
+  flex-direction: column;
+  width: 23vw;
+  align-items: stretch;
+}
+.quiz-box {
+  border-color: rgb(192, 183, 183);
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 10px;
+  background-color: whitesmoke;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  width: 47vw;
+  align-items: stretch;
+}
+.quiz-body {
+  width: inherit;
+  height: 60vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
+.drag-container {
+  width: inherit;
+  height: 20vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
+.messages {
+  overflow-y: scroll;
+  flex: 1;
+  width: 100%;
+}
+
+.inputs {
+  padding: 10px;
+  display: flex;
+}
+
+h2 {
+  text-align: center;
+}
+
+#message {
+  flex: 1;
+}
+
+.text {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.muted {
+  font-size: 10px;
+  color: darkgray;
+}
+input[type="radio"] {
+  transform: scale(1.5);
+}
+
+.icon-input-btn {
+  display: inline-block;
+  position: relative;
+}
+.icon-input-btn input[type="submit"] {
+  padding-left: 2em;
+}
+.icon-input-btn .bi {
+  display: inline-block;
+  position: absolute;
+  left: 0.65em;
+  top: 20%;
+  color: white;
+}
+.fixed-width {
+  width: 200px;
+}
+h3 {
+  color: #4d4dff;
+}
+.btn-group input {
+  background-color: #4d4dff; /* Green background */
+  border: 1px solid #8585dc; /* Green border */
+  color: white; /* White text */
+  padding: 10px 24px; /* Some padding */
+  cursor: pointer; /* Pointer/hand icon */
+  width: 100%; /* Set a width if needed */
+  display: block; /* Make the buttons appear below each other */
+}
+
+.btn-group input:not(:last-child) {
+  border-bottom: none; /* Prevent double borders */
+}
+
+/* Add a background color on hover */
+.btn-group input:hover {
+  font-weight: bolder;
+  display: block;
+}
+.back-color {
+  background-color: #4d4dff;
+  font-weight: bold;
+}
+.footer {
+  position: absolute;
+  width: 100%;
+  bottom: 0px;
+  left: 0;
+  text-align: center;
+}
+.navbar {
+  position: relative;
+}
+.brand {
+  position: absolute;
+  left: 50%;
+  margin-left: -50px !important; /* 50% of your logo width */
+  display: block;
+  font-size: 30px;
+  font-weight: bold;
+}
+.navbar-light .navbar-brand {
+  color: white !important;
+}
+#brand-name {
+  margin: 7px;
+}
+.navbar-light .navbar-nav .nav-link {
+  color: white !important;
+}
+.navbar .navbar-nav > li > a:hover {
+  color: black !important;
+  font-weight: bold;
+  font-size: larger;
+}
+.styled-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.styled-table thead tr {
+  background-color: #767c7c;
+  color: #e4e7e9;
+  text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+}
+
+.styled-table tbody tr {
+  border-bottom: 1px solid #e4e7e9;
+}
+
+.styled-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.styled-table thead tr {
+  background-color: #929696;
+  color: #e4e7e9;
+  text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+}
+
+.styled-table tbody tr {
+  border-bottom: 1px solid #e4e7e9;
+}

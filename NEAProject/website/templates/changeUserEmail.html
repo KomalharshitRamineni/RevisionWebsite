@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block title %}Change Email{% endblock %} {% block
+content %}
+<form method="POST" style="color: #767c7c">
+  <h3 align="center">Change Email</h3>
+  <div class="form-group">
+    <label for="name">New Email</label>
+    <input
+      type="text"
+      class="form-control"
+      id="email"
+      name="email"
+      placeholder="Enter email"
+    />
+  </div>
+
+  <br />
+  <button
+    type="submit"
+    class="btn btn-primary"
+    style="background-color: #767c7c; color: #e4e7e9"
+  >
+    Change email
+  </button>
+</form>
+
+{% endblock %}

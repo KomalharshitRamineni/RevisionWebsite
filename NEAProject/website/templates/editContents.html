@@ -14,12 +14,12 @@ content%}
 
 <script type="text/javascript">
   $(function () {
-    $("#autocomplete").autocomplete({
+    $("#searchByQuestions").autocomplete({
       source: function (request, response) {
         $.getJSON(
-          "{{url_for('FlashcardsSection.autocomplete',DeckName=DeckName )}}",
+          "{{url_for('flashcardsSection.searchByQuestions',DeckName=DeckName )}}",
           {
-            q: request.term, // in flask, "q" will be the argument to look for using request.args
+            searchItem: request.term, // in flask, "searchItem" will be the argument to look for using request.args
           },
           function (data) {
             response(data.Questions); // matching_results from jsonify
@@ -28,7 +28,7 @@ content%}
       },
       minLength: 2,
       select: function (event, ui) {
-        console.log(ui.item.value); // not in your question, but might help later
+        console.log(ui.item.value);
       },
     });
   });
@@ -38,13 +38,13 @@ content%}
 
 <form
   method="POST"
-  action="{{url_for('FlashcardsSection.ChooseFlashcardToEdit',DeckName=DeckName)}}"
+  action="{{url_for('flashcardsSection.ChooseFlashcardToEdit',deckName=DeckName)}}"
 >
   <div>
     <input
-      name="autocomplete"
+      name="searchByQuestions"
       type="text"
-      id="autocomplete"
+      id="searchByQuestions"
       class="form-control input-lg"
     />
   </div>
@@ -55,7 +55,7 @@ content%}
 <form
   method="POST"
   style="color: #767c7c"
-  action="{{url_for('FlashcardsSection.EditContent',OldQuestionAndAnswerID=QuestionAndAnswer[2],DeckName=DeckName)}}"
+  action="{{url_for('flashcardsSection.EditContent',OldQuestionAndAnswerID=QuestionAndAnswer[2],deckName=DeckName)}}"
 >
   <div class="form-group">
     <label for="Question">Question</label>

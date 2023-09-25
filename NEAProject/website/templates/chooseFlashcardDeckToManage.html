@@ -1,42 +1,76 @@
 {% extends "base.html" %} {% block title %}Flashcards{% endblock %} {% block
-content %}
-
-<style>
-  .center {
-    margin: 0;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    -ms-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);
-  }
-</style>
-
-{% if DeckToDisplay == 'Parent' %}
-
-<form
-  method="post"
-  action="{{url_for('FlashcardsSection.chooseFlashcardDeckToManage',PageToDisplay=PageToDisplay,DeckToDisplay='Child')}}"
->
-  {% for Deck in Decks%}
-  <input type="radio" id="deckName" name="deckName" value="{{Deck}}" />
-  <label for="deckName">{{Deck}}</label><br /><br />
-  {% endfor%}
-  <input name="ManageSubDecks" type="submit" value="Manage subdecks" />
-  <input name="Choose" type="submit" value="Choose" />
-</form>
+content %} {% if DeckToDisplay == 'Parent' %}
+<div class="row">
+  <div class="col"></div>
+  <div class="col">
+    <form
+      method="post"
+      action="{{url_for('flashcardsSection.chooseFlashcardDeckToManage',pageToDisplay=PageToDisplay,DeckToDisplay='Child')}}"
+    >
+      <h3 class="text-center mb-3">Choose Flashcard Deck</h3>
+      {% for Deck in Decks%}
+      <div class="form-check mb-3">
+        <input
+          class="form-check-input"
+          type="radio"
+          id="deckName"
+          name="deckName"
+          value="{{Deck}}"
+        />
+        <label class="form-check-label" for="deckName"> {{Deck}} </label>
+      </div>
+      {% endfor%}
+      <div class="text-center">
+        <input
+          name="ManageSubDecks"
+          type="submit"
+          value="Manage subdecks"
+          class="btn btn-lg btn-blue"
+        />
+        <input
+          name="Choose"
+          type="submit"
+          value="Choose"
+          class="btn btn-lg btn-blue"
+        />
+      </div>
+    </form>
+  </div>
+  <div class="col"></div>
+</div>
 
 {% endif %} {% if DeckToDisplay == 'Child' %}
-
-<form
-  method="post"
-  action="{{url_for('FlashcardsSection.chooseFlashcardDeckToManage',PageToDisplay=PageToDisplay)}}"
->
-  {% for Deck in Decks%}
-  <input type="radio" id="deckName" name="deckName" value="{{Deck}}" />
-  <label for="deckName">{{Deck}}</label><br /><br />
-  {% endfor%}
-  <input name="Choose" type="submit" value="Choose" />
-</form>
+<div class="row">
+  <div class="col-3"></div>
+  <div class="col-6">
+    <form
+      method="post"
+      action="{{url_for('flashcardsSection.chooseFlashcardDeckToManage',pageToDisplay=PageToDisplay)}}"
+    >
+      <h3 class="text-center mb-3">Manage Flashcards</h3>
+      {% for Deck in Decks%}
+      <div class="form-check-inline mb-3">
+        <input
+          class="form-check-input"
+          type="radio"
+          id="deckName"
+          name="deckName"
+          value="{{Deck}}"
+        />
+        <label class="form-check-label" for="deckName"> {{Deck}} </label>
+      </div>
+      {% endfor%}
+      <div class="text-center">
+        <input
+          name="Choose"
+          type="submit"
+          value="Choose"
+          class="btn btn-lg btn-blue"
+        />
+      </div>
+    </form>
+  </div>
+  <div class="col-3"></div>
+</div>
 
 {% endif %}{% endblock %}

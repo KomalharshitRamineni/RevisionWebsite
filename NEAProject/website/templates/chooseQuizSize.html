@@ -1,0 +1,31 @@
+{% extends "base.html" %} {% block title %}Quiz{% endblock %} {% block content
+%}
+<div class="row">
+  <div class="col-2"></div>
+  <div class="col-8">
+    <form method="POST">
+      <h3 class="text-center mb-3">Choose Number of questions</h3>
+      <div class="row g-3 align-items-center">
+        <div class="col-auto">
+          <label for="nuber" class="col-form-label">Enter Number</label>
+        </div>
+        <div class="col-auto">
+          <input
+            type="number"
+            class="form-control"
+            id="number"
+            name="number"
+            class="form-control"
+            placeholder="Enter number"
+          />
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">Create Quiz</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="col-2"></div>
+</div>
+
+{% endblock %}
