@@ -1,13 +1,11 @@
-from flask import Blueprint, render_template, flash, redirect,url_for,request,jsonify,session
+from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from .AnkiOperations import extractFlashcards, returnDecksAvailable, checkIfAnkiOpen, returnChildDecks
-import sqlite3
-from .models import Flashcard, FlashcardDeck
 
-HomePage = Blueprint('HomePage',__name__)
+homePage = Blueprint('homePage',__name__)
 
-@HomePage.route('/home')
+@homePage.route('/home')
 @login_required
 def home():
+    #Displays the homepage
     return render_template("home.html", user=current_user)
 

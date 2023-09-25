@@ -1,0 +1,102 @@
+{% extends 'base.html' %} {% block content %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+  $.ajax({
+    type: "GET",
+    url: "{{url_for('quizSection.multiplayerQuiz',QuizID=QuizID)}}",
+    success: function (data) {
+      $("#quiz-section").html(data);
+    },
+  });
+  $.ajax({
+    type: "GET",
+    url: "/Scoreboard",
+    success: function (data) {
+    $('#scores').html(data);
+    },
+  });
+</script>
+<title>Quiz</title>
+  <div class="row">
+  <div class="col-8">
+    <div id="quiz-section"></div>
+  </div>  
+  <div class="col-4">  
+    <div class="row">
+      <div class="container">
+        <div class="row g-2">
+          <div class="message-box">
+            <h2>Score board: {{code}}</h2>
+            <div class="messages" id="scores"></div>
+          </div>
+        </div>
+        <div class="row mt-4 g-2">
+          <div class="message-box">
+            <h2>Quiz Room: {{code}}</h2>
+            <div class="messages" id="messages"></div>
+            <div class="inputs">
+              <input
+                type="text"
+                rows="3"
+                placeholder="Message"
+                name="message"
+                id="message"
+              />
+              <button
+                type="button"
+                name="send"
+                id="send-btn"
+                onClick="sendMessage()">
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+       
+    </div>
+    
+      
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var socketio = io();
+
+    const messages = document.getElementById("messages");
+
+    const createMessage = (name, msg) => {
+      const content = `
+    <div class="text">
+        <span>
+            <strong>${name}</strong>: ${msg}
+        </span>
+        <span class="muted">
+            ${new Date().toLocaleString()}
+        </span>
+    </div>
+    `;
+      messages.innerHTML += content;
+    };
+
+    socketio.on("message", (data) => {
+      createMessage(data.name, data.message);
+    });
+
+
+    const sendMessage = () => {
+      const message = document.getElementById("message");
+      if (message.value == "") return;
+      socketio.emit("message", { data: message.value });
+      message.value = "";
+    };
+
+  </script>
+  {% for msg in messages %} {{msg}}
+  <script type="text/javascript">
+    createMessage("{{msg.name}}", "{{msg.message}}");
+  </script>
+  {% endfor %} {% endblock %}
+</div>
+</div>

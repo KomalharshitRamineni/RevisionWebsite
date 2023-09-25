@@ -1,0 +1,12 @@
+<div class="row p-5">
+  {% for x in UserNamesAndScores%}
+  <div class="row">
+    <div class="col">
+      <p>{{x[0]}}</p>
+    </div>
+    <div class="col font-weight-bold" style="font-size: 16px">
+      <p>{{x[1]}}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>

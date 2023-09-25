@@ -1,35 +1,87 @@
 {% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
-%}
-<form method="POST" style="color: #767c7c">
-  <h3 align="center">Login</h3>
-  <div class="form-group">
-    <label for="email">Email Address</label>
-    <input
-      type="email"
-      class="form-control"
-      id="email"
-      name="email"
-      placeholder="Enter email"
-    />
-  </div>
-  <div class="form-group">
-    <label for="password">Password</label>
-    <input
-      type="text"
-      class="form-control"
-      id="password"
-      name="password"
-      placeholder="Enter password"
-    />
-  </div>
+%} {{attempts}}
+<script>
+  //source https://www.javascripttutorial.net/javascript-dom/javascript-toggle-password-visibility/
+  function togglePasswordDisplay() {
+    let password = document.querySelector("#input-pass");
+    // toggle the type attribute
+    let type =
+      password.getAttribute("type") === "password" ? "text" : "password";
+    password.setAttribute("type", type);
 
-  <br />
-  <button
-    type="submit"
-    class="btn btn-primary"
-    style="background-color: #767c7c; color: #e4e7e9"
-  >
-    Login
-  </button>
-</form>
+    // toggle the icon
+    this.classList.toggle("bi-eye");
+  }
+</script>
+
+<div class="row">
+  <div class="col-lg-4"></div>
+  <div class="col-lg-4">
+    <form method="POST">
+      <h3 class="text-center">Login</h3>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          name="email"
+          placeholder="Enter email"
+        />
+      </div>
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div class="input-group mb-3">
+          <input
+            type="password"
+            class="form-control"
+            id="input-pass"
+            name="password"
+            placeholder="Enter password"
+          />
+
+          <span class="input-group-text">
+            <i
+              class="bi bi-eye-slash"
+              style="cursor: pointer"
+              id="togglePassword"
+              onclick="togglePasswordDisplay()"
+            ></i
+          ></span>
+        </div>
+      </div>
+      <div class="row mb-3">
+         <div class="col mb-3">
+          <input
+            type="submit"
+            value="Login"
+            name="Login"
+            class="btn btn-lg btn-primary btn-blue"
+          />
+        </div>
+       </div>
+       <div class="row mb-3">
+        <div class="col mb-3 text-left">
+          <input
+            type="submit"
+            value="Resend Verification Link"
+            name="ResendVerificationLink"
+            class="anchor-button btn-blue"
+          />
+        </div>
+        <div class="col mb-3 text-left">
+          <input
+            type="submit"
+            value="Reset Password"
+            name="ResetPassword"
+            class="anchor-button btn-blue"
+          />
+        </div>
+       </div>
+       
+      </div>
+    </form>
+  </div>
+  <div class="col-lg-4"></div>
+</div>
 {% endblock %}
